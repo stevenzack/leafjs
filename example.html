@@ -1,0 +1,16 @@
+<html>
+    <head>
+        <script src="leaf.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            {{$.message.value}}
+        </div>
+        <button onclick="app.message.update('hello Leaf.js')">Click to Change</button>
+        <script>
+            app=renderLeaf('app',{
+                message:createValue('hello')
+            })
+        </script>
+    </body>
+</html>

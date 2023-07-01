@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaf.js</title>
+    <script src="leaf.js"></script>
+    <link rel="stylesheet" href="app.css">
+</head>
+
+<body>
+    <div class="row shadow p">
+        <b>Leaf.js</b>
+        <span class="g"></span>
+        <a class="mx" href="https://github.com/StevenZack/leafjs">Github</a>
+        <a class="mx" href="leaf.js">Source Code</a>
+    </div>
+    <div class="col w">
+        <div class="col maxw3xl w">
+            <h1 class="mx">Leaf.js</h1>
+            <h3 class="mx">Build Web for Old Browsers</h3>
+            <p>We use pure basic JavaScript, to support the oldest browser early than 2010</p>
+
+            <fieldset class="w m">
+                <legend>index.html</legend>
+                <textarea disabled rows="16" class="w">
+<html>
+    <head>
+        <script src="leaf.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            {{$.message.value}}
+        </div>
+        <button onclick="app.message.update('hello Leaf.js')">Click to Change</button>
+        <script>
+            app = renderLeaf('app', {
+                message: createValue('hello')
+            })
+        </script>
+    </body>
+</html>
+                </textarea>
+            </fieldset>
+
+            <fieldset>
+                <legend>Result</legend>
+                <div id="app">
+                    Hello Leaf.js x{{$.message.value}}
+                </div>
+                <button onclick="app.message.update(app.message.value+1)">Click to Change</button>
+                <script>
+                    app = renderLeaf('app', {
+                        message: createValue(0)
+                    })
+                </script>
+            </fieldset>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,287 @@
+body {
+    margin: 0px;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.cols {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.cole {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.colst {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.red {
+    color: red;
+}
+
+.black {
+    color: black;
+}
+
+.white {
+    color: white;
+}
+
+.hover:hover {
+    background-color: #eee;
+}
+
+.hoverdark:hover {
+    background-color: #ddd;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.rows {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.rowe {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.rowst {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.g {
+    flex-grow: 1;
+}
+
+.p {
+    padding: 8px;
+}
+
+.p2 {
+    padding: 16px;
+}
+
+.px {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.py {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.pl {
+    padding-left: 8px;
+}
+
+.pr {
+    padding-right: 8px;
+}
+
+.pt {
+    padding-top: 8px;
+}
+
+.pb {
+    padding-bottom: 8px;
+}
+
+.m {
+    margin: 8px;
+}
+
+.m2 {
+    margin: 16px;
+}
+
+.mx {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.my {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.ml {
+    margin-left: 8px;
+}
+
+.mr {
+    margin-right: 8px;
+}
+
+.mt {
+    margin-top: 8px;
+}
+
+.mb {
+    margin-bottom: 8px;
+}
+
+.w {
+    width: 100%;
+}
+
+.h {
+    height: 100%;
+}
+
+.maxw3xl {
+    max-width: 768px;
+}
+
+.rounded {
+    border-radius: 4px;
+}
+
+.card {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    border-radius: 4px;
+    padding: 16px;
+}
+
+.between {
+    justify-content: space-between;
+}
+
+.wrap {
+    flex-wrap: wrap;
+}
+
+.circle {
+    border-radius: 9999px;
+}
+
+.hide {
+    display: none;
+}
+
+.opacity1 {
+    opacity: .01;
+}
+
+.abs {
+    position: absolute;
+}
+
+.lt0 {
+    left: 0;
+    top: 0;
+}
+
+.alignend {
+    align-self: flex-end;
+}
+
+.lgrey {
+    color: lightgrey !important;
+}
+
+.grey {
+    color: grey !important;
+}
+
+.dividerv {
+    border-left: 2px solid #eee;
+    flex-grow: 1;
+}
+
+.rounded-xl {
+    border-radius: 12px;
+}
+
+.border {
+    border-width: 1px;
+    border-color: lightgrey;
+}
+
+.hscreen {
+    height: 100vh;
+}
+
+.text-xs {
+    font-size: 12px !important;
+}
+
+.text-sm {
+    font-size: 14px !important;
+}
+
+.btnicon {
+    font-size: 14px !important;
+    margin-right: 4px;
+    margin-left: 4px;
+}
+
+.plainlink {
+    text-decoration: none;
+    color: inherit;
+}
+
+.spacearound {
+    justify-content: space-around;
+}
+
+.divider {
+    border-top: 2px solid #eee;
+    width: 98%;
+}
+
+.bggrey {
+    background-color: grey;
+}
+
+.iconbtn {
+    color: lightgray !important;
+    border-radius: 9999px;
+    padding: 8px;
+}
+
+.iconbtn:hover {
+    background-color: #ddd;
+}
+@media screen and (max-width: 700px){
+    .mobilehide{
+        display: none;
+    }
+}
+@media screen and (min-width: 700px){
+    .desktophide{
+        display: none;
+    }
+}
