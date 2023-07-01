@@ -24,32 +24,26 @@
 
             <fieldset class="w m">
                 <legend>index.html</legend>
-                <textarea disabled rows="16" class="w">
-<html>
-    <head>
-        <script src="leaf.js"></script>
-    </head>
-    <body>
-        <div id="app">
-            {{$.message.value}}
-        </div>
-        <button onclick="app.message.update('hello Leaf.js')">Click to Change</button>
-        <script>
-            app = renderLeaf('app', {
-                message: createValue('hello')
-            })
-        </script>
-    </body>
-</html>
+                <textarea disabled rows="12" class="w">
+<div id="app">
+    x{{$.message.value}}
+</div>
+<button onclick="app.message.update(app.message.value+1)">Click</button>
+
+<script>
+    app = renderLeaf('app', {
+        message: createValue(0)
+    })
+</script>
                 </textarea>
             </fieldset>
 
             <fieldset>
                 <legend>Result</legend>
                 <div id="app">
-                    Hello Leaf.js x{{$.message.value}}
+                    x{{$.message.value}}
                 </div>
-                <button onclick="app.message.update(app.message.value+1)">Click to Change</button>
+                <button onclick="app.message.update(app.message.value+1)">Click</button>
                 <script>
                     app = renderLeaf('app', {
                         message: createValue(0)
