@@ -10,17 +10,16 @@
 </head>
 
 <body>
-    <div id="app" class="row">
-        <ol>
-            <li l-for="$.list">
-                <span>{{$}}</span>
-            </li>
-        </ol>
-        <button onclick="app.list.postValue(app.list.value.push('one'))">click</button>
+    <div id="app">
+        <span l-if="$.show.value">hello</span>
+        <button onclick="doChange()">click</button>
     </div>
     <script>
+        function doChange() {
+            app.show.postValue(!app.show.value);
+        }
         app = renderLeaf('app', {
-            list:createValue([]),
+            show: createValue(true),
         })
     </script>
 </body>
