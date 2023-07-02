@@ -11,15 +11,44 @@
 
 <body>
     <div id="app">
-        <span l-if="$.show">hello</span>
+        <span l-if="show">{{counter}}</span>
+        <ol>
+            <li l-for="list">
+                <span>
+                    {{title}}
+                </span>
+                <div>
+                    <button l-for="data" onclick="doAddItem()">
+                        {{$}}
+                    </button>
+                </div>
+            </li>
+        </ol>
         <button onclick="doChange()">click</button>
+        <button onclick="doAdd()">add</button>
     </div>
     <script>
+        function doAddItem() {
+            app.list.value[0].data.append('more');
+        }
+        function doAdd() {
+            app.list.append({
+                title: 'one,',
+                data: createValue([
+                    'one',
+                    'two'
+                ])
+            })
+        }
         function doChange() {
             app.show.postValue(!app.show.value);
+            app.counter.value++;
+            app.counter.notifyChange();
         }
         app = renderLeaf('app', {
             show: createValue(true),
+            counter: createValue(1),
+            list: createValue([])
         })
     </script>
 </body>

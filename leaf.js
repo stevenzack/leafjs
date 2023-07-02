@@ -1,5 +1,5 @@
 function createValue(data) {
-    return {
+    var out = {
         __observers: [],
         postValue: function (v) {
             this.value = v;
@@ -7,13 +7,35 @@ function createValue(data) {
                 this.__observers[i](v);
             }
         },
-        notifyUpdate: function () {
+        notifyChange: function () {
             for (var i = 0; i < this.__observers.length; i++) {
                 this.__observers[i](this.value);
             }
         },
         value: data,
+    };
+    if (data instanceof Array) {
+        out.append = function (v) {
+            if (this.value instanceof Array) {
+                this.value.push(v);
+            } else {
+                throw new Error('invalid operation: calling append on a non-array observable value')
+            }
+            this.notifyChange();
+        };
+    } else if (typeof data === 'number') {
+        out.inc = function (v) {
+            if (!v) {
+                this.value++;
+            } else if (typeof v === 'number') {
+                this.value += v;
+            } else {
+                throw new Error('invalid input type for inc():' + (typeof v))
+            }
+            this.notifyChange();
+        }
     }
+    return out;
 }
 var __leaf_randomIDs = {}
 
@@ -349,29 +371,62 @@ function __leaf_addClass(elem, className) {
 }
 
 function __leaf_executeToken(__leaf_token_origin, $) {
+    eval(__leaf_evaluateVariablesOfObject($, '$'));
     var result = eval(__leaf_token_origin);
     return result
+}
+function __leaf_evaluateVariablesOfObject(obj, objName) {
+    if (typeof obj !== 'object') {
+        return;
+    }
+    var builder = '';
+    for (var key in obj) {
+        var s = 'var ' + key + '=' + objName + '.' + key;
+        var v = obj[key];
+        if (v.__observers && v.postValue && !(v.value instanceof Array)) {
+            s += '.value';
+        }
+        builder += s + ';';
+    }
+    return builder;
 }
 
 function __leaf_parseObservablesInToken(tokenOrigin, $) {
     var observables = [];
-    for (var i = 0; i < tokenOrigin.length - 1; i++) {
-        var char1 = tokenOrigin[i];
-        var char2 = tokenOrigin[i + 1];
-        if (char1 + char2 === '$.') {
-            i += 2;
-            var variableName = '';
-            for (; i < tokenOrigin.length; i++) {
-                if (__leaf_isVariableName(tokenOrigin.charAt(i))) {
-                    variableName += tokenOrigin.charAt(i);
-                } else {
-
-                    break;
-                }
+    var variableStarted = -1;
+    for (var i = 0; i < tokenOrigin.length; i++) {
+        var char = tokenOrigin[i];
+        if (__leaf_isVariableName(char)) {
+            if (variableStarted === -1) {
+                variableStarted = i;
+                continue;
             }
-            var observable = $[variableName];
-
+            continue;
+        }
+        if (variableStarted === -1) {
+            continue;
+        }
+        // variable ending
+        var variableName = tokenOrigin.substring(variableStarted, i);
+        var observable = $[variableName];
+        if (observable) {
+            if (variableStarted > 0 && tokenOrigin[variableStarted - 1] === '.') {
+                variableStarted = -1;
+                continue;
+            }
             observables.push(observable);
+        }
+        variableStarted = -1;
+    }
+    if (variableStarted !== -1) {
+        // variable until the end
+        var variableName = tokenOrigin.substring(variableStarted, tokenOrigin.length);
+        var observable = $[variableName];
+        if (observable) {
+            if (variableStarted > 0 && tokenOrigin[variableStarted - 1] === '.') {
+            } else {
+                observables.push(observable);
+            }
         }
     }
     return observables;
@@ -382,9 +437,13 @@ function __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups,
     var childLevel = 0;
     var currentTemplateIndex = 0;
     var builder = '';
-    for (var i = 0; i < s.length - 1; i++) {
+    for (var i = 0; i < s.length; i++) {
         var char1 = s.charAt(i);
-        var char2 = s.charAt(i + 1);
+        var char2 = '';
+        if (i < s.length - 1) {
+            char2 = s.charAt(i + 1);
+        }
+
         if (char1 === '<') {
             builder += char1;
             if (char2 === '/') {
