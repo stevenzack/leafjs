@@ -26,7 +26,7 @@
                 <legend>index.html</legend>
                 <textarea disabled rows="12" class="w">
 <div id="app">
-    x{{$.message.value}}
+    x{{$.message}}
 </div>
 <button onclick="app.message.postValue(app.message.value+1)">Click</button>
 
@@ -41,7 +41,7 @@
             <fieldset>
                 <legend>Result</legend>
                 <div id="app">
-                    x{{$.message.value}}
+                    x{{$.message}}
                 </div>
                 <button onclick="app.message.postValue(app.message.value+1)">Click</button>
                 <script>

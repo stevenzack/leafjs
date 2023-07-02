@@ -184,6 +184,9 @@ function __leaf_hydrate(elem, $) {
         (function (name, token, observables) {
             var assembleAttributesData = function (name, token) {
                 var result = __leaf_executeToken(token, $);
+                if (result && result.__observers && result.postValue) {
+                    result = result.value;
+                }
                 if (name === 'class') {
                     if (result) {
                         __leaf_addClass(elem, value);
@@ -362,7 +365,7 @@ function __leaf_parseObservablesInToken(tokenOrigin, $) {
                 if (__leaf_isVariableName(tokenOrigin.charAt(i))) {
                     variableName += tokenOrigin.charAt(i);
                 } else {
-                    
+
                     break;
                 }
             }
@@ -426,6 +429,9 @@ function __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups,
         for (var j = 0; j < tokenGroups[templateIndex].length; j++) {
             var token = tokenGroups[templateIndex][j];
             var result = __leaf_executeToken(token.origin, $);
+            if (result && result.__observers && result.postValue) {
+                result = result.value;
+            }
             targetTemplate = targetTemplate.replace(token.uniqueID, result);
         }
         builder += targetTemplate;
