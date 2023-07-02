@@ -20,7 +20,7 @@
         <div class="col maxw3xl w">
             <h1 class="mx">Leaf.js</h1>
             <h3 class="mx">Build Web for Old Browsers</h3>
-            <p>We use pure basic JavaScript, to support the oldest browser early than 2010</p>
+            <p>We use pure primitive JavaScript, to support the oldest browser earlier than 2010</p>
 
             <fieldset class="w m">
                 <legend>index.html</legend>
@@ -28,7 +28,7 @@
 <div id="app">
     x{{$.message.value}}
 </div>
-<button onclick="app.message.update(app.message.value+1)">Click</button>
+<button onclick="app.message.postValue(app.message.value+1)">Click</button>
 
 <script>
     app = renderLeaf('app', {
@@ -43,7 +43,7 @@
                 <div id="app">
                     x{{$.message.value}}
                 </div>
-                <button onclick="app.message.update(app.message.value+1)">Click</button>
+                <button onclick="app.message.postValue(app.message.value+1)">Click</button>
                 <script>
                     app = renderLeaf('app', {
                         message: createValue(0)

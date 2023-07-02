@@ -1,7 +1,7 @@
 function createValue(value) {
     return {
         __observers: [],
-        update: function (v) {
+        postValue: function (v) {
             this.value = v;
             for (var i = 0; i < this.__observers.length; i++) {
                 this.__observers[i](v);
@@ -30,7 +30,7 @@ function __leaf_generateID(length) {
 }
 
 function renderLeaf(elemID, $) {
-    return __leaf_parseTopLevelInnerText(document.getElementById(elemID), $);
+    return __leaf_parse(document.getElementById(elemID), $);
 }
 function __leaf_isLowerCaseEnglish(c) {
     var l = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
@@ -52,8 +52,9 @@ function __leaf_isVariableName(c) {
     return false;
 }
 
-function __leaf_parseTopLevelInnerText(elem, $) {
+function __leaf_parse(elem, $) {
     var s = elem.innerHTML;
+    // top level text
     var childLevel = 0;
     var template = [''];
     var leftToken = -1;
@@ -140,14 +141,86 @@ function __leaf_parseTopLevelInnerText(elem, $) {
 
         }
     }
-
+    // attributes
+    for (var i = 0; i < elem.attributes.length; i++) {
+        var name = elem.attributes[i].name;
+        if (name.startsWith('l-')) {
+            name = name.substring(2);
+            var value = '';
+            var observables = __leaf_parseObservablesInToken(elem.attributes[i].value, $);
+            if (name.startsWith('style-')) {
+                value = name.substring(6);
+                name = 'style';
+            } else if (name.startsWith('class-')) {
+                value = name.substring(6);
+                name = 'class';
+            }
+            (function (name, token) {
+                var fn = function (name, token) {
+                    var result = __leaf_executeToken(token, $);
+                    if (name == 'class') {
+                        if (result) {
+                            __leaf_addClass(elem, value);
+                        } else {
+                            __leaf_removeClass(elem, value);
+                        }
+                        return;
+                    } else if (name == 'if') {
+                        if (result) {
+                            elem.style.display = '';
+                        } else {
+                            elem.style.display = 'none';
+                        }
+                        return;
+                    }
+                    if (typeof result == 'boolean') {
+                        if (result) {
+                            elem.setAttribute(name, value)
+                        } else {
+                            elem.removeAttribute(name)
+                        }
+                    } else {
+                        elem.setAttribute(name, result)
+                    }
+                };
+                for (var j = 0; j < observables.length; j++) {
+                    observables[j].__observers.push(function (v) {
+                        fn(name, token);
+                    })
+                }
+                fn(name, token);
+            })(name, elem.attributes[i].value)
+        }
+    }
     // render initial data
     for (var i = 0; i < template.length; i++) {
         __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, i, $)
     }
 
-    console.log(tokenGroups);
+    // children
+    for (var i = 0; i < elem.children.length; i++) {
+        __leaf_parse(elem.children[i], $);
+    }
     return $;
+}
+
+function __leaf_removeClass(elem, className) {
+    var s = elem.getAttribute('class');
+    if (s && s.indexOf(className) > -1) {
+        elem.setAttribute('class', s.replace(className, ''));
+    }
+    return;
+}
+
+function __leaf_addClass(elem, className) {
+    var s = elem.getAttribute('class');
+    if (!s) {
+        s = '';
+    }
+    if (s.indexOf(className) == -1) {
+        elem.setAttribute('class', s + ' ' + className);
+    }
+    return;
 }
 
 function __leaf_executeToken(__leaf_token_origin, $) {
@@ -170,7 +243,7 @@ function __leaf_parseObservablesInToken(tokenOrigin, $) {
                 }
             }
             var observable = $[variableName];
-            if (!observable || !observable.__observers || !observable.update) {
+            if (!observable || !observable.__observers || !observable.postValue) {
                 throw new Error('parse template failed: invalid variable name ' + tokenOrigin);
             }
 
