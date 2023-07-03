@@ -10,14 +10,15 @@
 </head>
 
 <body>
-    <div id="style-id">
-        <b l-style="'color:'+colors[index]">Hello Leaf.js</b>
-        <button onclick="appStyle.index.postValue((i)=> i+1%6)">Toggle</button>
+    <div id="two-way-binding-id">
+        <div> {{text}} </div>
+        <input type="text" l-value="text" onkeyup="appTwoWayBinding.text.postValue(this.value)">
+        <div></div>
+        <textarea rows="6" cols="10" onkeyup="appTwoWayBinding.text.postValue(this.value)">{{text}}</textarea>
     </div>
     <script>
-        appStyle = Leaf('style-id', {
-            index: Observable(0),
-            colors: ['red', 'green', 'blue', 'orange', 'pink', 'purple']
+        appTwoWayBinding = Leaf('two-way-binding-id', {
+            text: Observable('initial value')
         })
     </script>
 </body>

@@ -278,7 +278,11 @@ function __leaf_hydrate(elem, $, _index) {
                         elem.removeAttribute(name)
                     }
                 } else {
-                    elem.setAttribute(name, __leaf_sanitizeHTML(result));
+                    if (name === 'value') {
+                        elem.value = __leaf_sanitizeHTML(result)
+                    } else {
+                        elem.setAttribute(name, __leaf_sanitizeHTML(result));
+                    }
                 }
             };
             for (var j = 0; j < observables.length; j++) {
@@ -601,4 +605,7 @@ function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templat
         }
     }
     elem.innerHTML = builder;
+    if (elem.tagName === 'TEXTAREA') {
+        elem.value = builder;
+    }
 }

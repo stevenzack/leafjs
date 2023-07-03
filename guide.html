@@ -79,7 +79,7 @@
             var sourceCode = app.code[value];
             var s = __leaf_desanitizeHTML(sourceCode);
             document.getElementById('result').innerHTML = s;
-            document.getElementById('sourceCode').innerHTML = sourceCode;
+            document.getElementById('sourceCode').value = s;
             runScriptInHTML(s);
         }
         app = Leaf('app', {
