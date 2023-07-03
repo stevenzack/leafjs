@@ -1,16 +1,22 @@
 function Observable(data) {
     var out = {
         __observers: [],
-        postValue: function (v) {
-            if (v === this.value) return;
-            this.value = v;
+        postValue: function (valueOrFunc) {
+            if (typeof valueOrFunc === 'function') {
+                valueOrFunc = valueOrFunc(this.value);
+            }
+            if ((typeof valueOrFunc) != (typeof this.value)) {
+                throw new Error('postValue() type mismatch: ' + (typeof valueOrFunc) + ' vs ' + (typeof this.value));
+            }
+            if (valueOrFunc === this.value) return;
+            this.value = valueOrFunc;
             for (var i = 0; i < this.__observers.length; i++) {
-                this.__observers[i](v);
+                this.__observers[i](this.value);
             }
         },
         update: function (fn) {
             fn(this.value);
-            this.postValue(this.value);
+            this.notifyChange();
         },
         notifyChange: function () {
             for (var i = 0; i < this.__observers.length; i++) {
@@ -60,6 +66,11 @@ function Observable(data) {
             }
             this.notifyChange();
         }
+    } else if (typeof data === 'boolean') {
+        out.toggle = function () {
+            this.value = !this.value;
+            this.notifyChange();
+        }
     }
     return out;
 }
@@ -82,9 +93,14 @@ function __leaf_generateID(length) {
     return result;
 }
 
-function Leaf(elemID, $) {
-    $._root = $;
-    return __leaf_hydrate(document.getElementById(elemID), $);
+function Leaf(elemOrId, $) {
+    if (typeof elemOrId === 'string') {
+        elemOrId = document.getElementById(elemOrId);
+    }
+    if (!(elemOrId instanceof HTMLElement)) {
+        throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elemOrId);
+    }
+    return __leaf_hydrate(elemOrId, $);
 }
 function __leaf_isLowerCaseEnglish(c) {
     var l = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
@@ -132,7 +148,7 @@ function __leaf_hydrate(elem, $, _index) {
         if (__leaf_startsWith(name, 'style-')) {
             value = name.substring(6);
             name = 'style';
-        } else if (__leaf_startsWith(name, 'class-')) {
+        } else if (__leaf_startsWith(name, 'class:')) {
             value = name.substring(6);
             name = 'class';
         } else if (name === 'for') {
@@ -410,6 +426,15 @@ function __leaf_sanitizeHTML(s) {
     // sanitize untrusted HTML tag
     s = s.replace('<', '&lt;');
     s = s.replace('>', '&gt;');
+    return s;
+}
+function __leaf_desanitizeHTML(s) {
+    if (typeof s !== 'string') {
+        return;
+    }
+    // sanitize untrusted HTML tag
+    s = s.replace('&lt;', '<');
+    s = s.replace('&gt;', '>');
     return s;
 }
 function __leaf_executeToken(__leaf_token_origin, $, _index) {

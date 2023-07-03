@@ -8,3 +8,5 @@ We use pure basic JavaScript, to support the oldest browser early than 2010
 
 - check self closing tag
 - prevent xss
+- includeHTML
+- two way binding issue: multiple input binding

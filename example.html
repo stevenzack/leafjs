@@ -10,16 +10,15 @@
 </head>
 
 <body>
-    <div id="app">
-        <span>{{message}}</span>
-        <textarea name="" id="" cols="30" rows="10" onkeyup="app.message.postValue(this.value)">{{message}}</textarea>
+    <div id="style-id">
+        <b l-style="'color:'+colors[index]">Hello Leaf.js</b>
+        <button onclick="appStyle.index.postValue((i)=> i+1%6)">Toggle</button>
     </div>
     <script>
-        app = Leaf('app', {
-            message: Observable('text')
+        appStyle = Leaf('style-id', {
+            index: Observable(0),
+            colors: ['red', 'green', 'blue', 'orange', 'pink', 'purple']
         })
-    </script>
-    <script>
     </script>
 </body>
 
