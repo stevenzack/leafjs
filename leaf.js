@@ -262,7 +262,7 @@ function __leaf_hydrate(elem, $, _index) {
                         elem.removeAttribute(name)
                     }
                 } else {
-                    elem.setAttribute(name, result)
+                    elem.setAttribute(name, __leaf_sanitizeHTML(result));
                 }
             };
             for (var j = 0; j < observables.length; j++) {
@@ -278,7 +278,7 @@ function __leaf_hydrate(elem, $, _index) {
     }
 
 
-    // top level text
+    // inner text
     var childLevel = 0;
     var template = [''];
     var leftToken = -1;
@@ -330,7 +330,7 @@ function __leaf_hydrate(elem, $, _index) {
         if (leftToken > -1) {
             if (char1 + char2 === '}}') {
                 var tokenOrigin = s.substring(leftToken + 2, i);
-                if (s.children && s.children.length > 0)
+                if (elem.children.length > 0)
                     throw new Error('Leaf.js currently don\'t support textContent binding with parentNode\'s children.length>0, it may lost the binding connection when textContent update. Please wrap your textContent with a <span> or <div>: {{' + tokenOrigin + '}}')
                 var uniqueID = __leaf_generateID(16);
                 template[template.length - 1] += uniqueID;
@@ -402,7 +402,16 @@ function __leaf_addClass(elem, className) {
     }
     return;
 }
-
+function __leaf_sanitizeHTML(s) {
+    s = s + '';
+    if (typeof s !== 'string') {
+        return;
+    }
+    // sanitize untrusted HTML tag
+    s = s.replace('<', '&lt;');
+    s = s.replace('>', '&gt;');
+    return s;
+}
 function __leaf_executeToken(__leaf_token_origin, $, _index) {
     eval(__leaf_evaluateVariablesOfObject($, '$'));
     var result = eval(__leaf_token_origin);
@@ -552,7 +561,7 @@ function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templat
             if (result && result.__observers && result.postValue) {
                 result = result.value;
             }
-            targetTemplate = targetTemplate.replace(token.uniqueID, result);
+            targetTemplate = targetTemplate.replace(token.uniqueID, __leaf_sanitizeHTML(result));
         }
         builder += targetTemplate;
         currentTemplateIndex++;

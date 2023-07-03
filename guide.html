@@ -17,13 +17,13 @@
         <a class="mx" href="https://github.com/StevenZack/leafjs">Github</a>
         <a class="mx" href="leaf.js">Source Code</a>
     </div>
-    <h1>Quick Guide</h1>
     <div class="col w" id="app">
         <div class="col maxw3xl w">
+            <h1>Quick Guide</h1>
             <fieldset>
                 <legend>index.html</legend>
                 <p>
-                    <label for="examples-sel">Examples</label>
+                    <label for="examples-sel">Choose example</label>
                     <select id="examples-sel" onchange="app.selected.postValue(this.value)">
                         <optgroup label="Basic">
                             <option value="text" l-selected="selected==='text'">text</option>
@@ -41,9 +41,7 @@
                         </optgroup>
                     </select>
                 </p>
-                <br>
-                <img src="" alt="">
-                {{selected}}
+                <span>{{selected}}</span>
             </fieldset>
         </div>
     </div>
