@@ -363,7 +363,7 @@ function __leaf_hydrate(elem, $, _index) {
                     var node = observables[k];
                     if (node.__observers && node.postValue) {
                         node.__observers.push(function (v) {
-                            __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, templateIndex, $, _index);
+                            __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templateIndex, $, _index);
                         });
                     }
                 }
@@ -374,7 +374,7 @@ function __leaf_hydrate(elem, $, _index) {
 
     // render innerText
     for (var i = 0; i < template.length; i++) {
-        __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, i, $, _index)
+        __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, i, $, _index)
     }
 
     // children
@@ -465,7 +465,35 @@ function __leaf_parseObservablesInToken(tokenOrigin, $) {
     return observables;
 }
 
-function __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, templateIndex, $, _index) {
+function __leaf_isEmptyTag(tagName) {
+    for (var i = 0; i < tagName.length; i++) {
+        if (!__leaf_isEnglishAlphabet(tagName.charAt(i))) {
+            tagName = tagName.substring(0, i);
+        }
+    }
+    tagName = tagName.toUpperCase();
+    switch (tagName) {
+        case 'AREA': break;
+        case 'BASE': break;
+        case 'BR': break;
+        case 'COL': break;
+        case 'EMBED': break;
+        case 'HR': break;
+        case 'IMG': break;
+        case 'INPUT': break;
+        case 'LINK': break;
+        case 'META': break;
+        case 'PARAM': break;
+        case 'SOURCE': break;
+        case 'TRACK': break;
+        case 'WBR': break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templateIndex, $, _index) {
     var s = elem.innerHTML;
     var childLevel = 0;
     var currentTemplateIndex = 0;

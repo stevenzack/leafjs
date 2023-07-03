@@ -17,24 +17,24 @@
         <a class="mx" href="https://github.com/StevenZack/leafjs">Github</a>
         <a class="mx" href="leaf.js">Source Code</a>
     </div>
-
+    <h1>Quick Guide</h1>
     <div class="col w" id="app">
         <div class="col maxw3xl w">
             <fieldset>
                 <legend>index.html</legend>
                 <p>
                     <label for="examples-sel">Examples</label>
-                    <select id="examples-sel" l-model="selected">
+                    <select id="examples-sel" onchange="app.selected.postValue(this.value)">
                         <optgroup label="Basic">
-                            <option value="text">text</option>
-                            <option value="observable">observable</option>
+                            <option value="text" l-selected="selected==='text'">text</option>
+                            <option value="observable" l-selected="selected==='observable'">observable</option>
                         </optgroup>
                         <optgroup label="Control Flow">
-                            <option value="if">if</option>
-                            <option value="for">for</option>
+                            <option value="if" l-selected="selected==='if'">if</option>
+                            <option value="for" l-selected="selected==='for'">for</option>
                         </optgroup>
                         <optgroup label="Binding">
-                            <option value="two-way-binding">two-way binding</option>
+                            <option value="two-way-binding" l-selected="selected==='two-way-binding'">two-way binding</option>
                         </optgroup>
                         <optgroup label="Array Operation">
 
@@ -42,16 +42,15 @@
                     </select>
                 </p>
                 <br>
-                <input type="text" l-model="message">
-                {{message}}
+                <img src="" alt="">
+                {{selected}}
             </fieldset>
         </div>
     </div>
 
     <script>
-        app=Leaf('app',{
-            selected:Observable('text'),
-            message:Observable('hello'),
+        app = Leaf('app', {
+            selected: Observable('text'),
         })
     </script>
 </body>

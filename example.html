@@ -11,15 +11,15 @@
 
 <body>
     <div id="app">
+        <input type="text">
         <span>{{message}}</span>
-        <textarea name="" id="" cols="30" rows="10" onkeyup="app.message.postValue(this.value)">
-{{message}}
-        </textarea>
     </div>
     <script>
         app = Leaf('app', {
             message: Observable('text')
         })
+    </script>
+    <script>
     </script>
 </body>
 
