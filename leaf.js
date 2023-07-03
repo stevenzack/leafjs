@@ -110,23 +110,28 @@ function __leaf_isVariableName(c) {
     }
     return false;
 }
-
+function __leaf_startsWith(s, sep) {
+    if (s.length < sep.length) {
+        return false;
+    }
+    return s.substring(0, sep.length) === sep;
+}
 function __leaf_hydrate(elem, $, _index) {
     var s = elem.innerHTML;
 
     // attributes
     for (var i = 0; i < elem.attributes.length; i++) {
         var name = elem.attributes[i].name;
-        if (name.substring(0, 2) !== 'l-') {
+        if (!__leaf_startsWith(name, 'l-')) {
             continue;
         }
 
         name = name.substring(2);
         var value = '';
-        if (name.substring(0, 6) === 'style-') {
+        if (__leaf_startsWith(name, 'style-')) {
             value = name.substring(6);
             name = 'style';
-        } else if (name.substring(0, 6) === 'class-') {
+        } else if (__leaf_startsWith(name, 'class-')) {
             value = name.substring(6);
             name = 'class';
         } else if (name === 'for') {
