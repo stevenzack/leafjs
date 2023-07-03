@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaf.js - Guide</title>
+    <script src="leaf.js"></script>
+    <link rel="stylesheet" href="app.css">
+</head>
+
+<body>
+    <div class="row shadow p">
+        <b>Leaf.js</b>
+        <span class="g"></span>
+        <a class="mx" href="guide.html">Guide</a>
+        <a class="mx" href="https://github.com/StevenZack/leafjs">Github</a>
+        <a class="mx" href="leaf.js">Source Code</a>
+    </div>
+
+    <div class="col w" id="app">
+        <div class="col maxw3xl w">
+            <fieldset>
+                <legend>index.html</legend>
+                <p>
+                    <label for="examples-sel">Examples</label>
+                    <select id="examples-sel" onchange="doSelectIndex(this)">
+                        <optgroup label="Basic">
+                            <option value="text">text</option>
+                            <option value="observable">observable</option>
+                        </optgroup>
+                        <optgroup label="Control Flow">
+                            <option value="if">if</option>
+                            <option value="for">for</option>
+                        </optgroup>
+                        <optgroup label="Binding">
+                            <option value="two-way-binding">two-way binding</option>
+                        </optgroup>
+                        <optgroup label="Array Operation">
+
+                        </optgroup>
+                    </select>
+
+                    <input type="text" name="" id="" onkeyup="console.log(this.value)">
+                    <textarea name="" id="" cols="30" rows="10" onkeyup="console.log(this.value)"></textarea>
+                    
+                </p>
+                {{selected}}
+            </fieldset>
+        </div>
+        <script>
+            function doSelectIndex(self) {
+                console.log(self.value);
+            }
+            app = Leaf('app', {
+                selected: Observable('if')
+            })
+        </script>
+    </div>
+</body>
+
+</html>

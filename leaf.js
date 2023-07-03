@@ -1,4 +1,4 @@
-function createValue(data) {
+function Observable(data) {
     var out = {
         __observers: [],
         postValue: function (v) {
@@ -6,6 +6,10 @@ function createValue(data) {
             for (var i = 0; i < this.__observers.length; i++) {
                 this.__observers[i](v);
             }
+        },
+        update: function (fn) {
+            fn(this.value);
+            this.postValue(this.value);
         },
         notifyChange: function () {
             for (var i = 0; i < this.__observers.length; i++) {
@@ -23,6 +27,27 @@ function createValue(data) {
             }
             this.notifyChange();
         };
+        out.removeAt = function (i) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 1);
+            this.notifyChange();
+        };
+        out.replace = function (i, v) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 1, v);
+            this.notifyChange();
+        };
+        out.insertAfter = function (i, v) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 0, v);
+            this.notifyChange();
+        }
     } else if (typeof data === 'number') {
         out.inc = function (v) {
             if (!v) {
@@ -56,7 +81,7 @@ function __leaf_generateID(length) {
     return result;
 }
 
-function renderLeaf(elemID, $) {
+function Leaf(elemID, $) {
     $._root = $;
     return __leaf_hydrate(document.getElementById(elemID), $);
 }
@@ -86,7 +111,7 @@ function __leaf_isVariableName(c) {
     return false;
 }
 
-function __leaf_hydrate(elem, $) {
+function __leaf_hydrate(elem, $, _index) {
     var s = elem.innerHTML;
 
     // attributes
@@ -106,7 +131,7 @@ function __leaf_hydrate(elem, $) {
             name = 'class';
         } else if (name === 'for') {
             var token = elem.attributes[i].value;
-            var result = __leaf_executeToken(token, $);
+            var result = __leaf_executeToken(token, $, _index);
             if (!result) {
                 throw new Error('the returned type is not an observable<Array>: l-for="' + token + '", instead it is ' + result.value)
             }
@@ -148,7 +173,7 @@ function __leaf_hydrate(elem, $) {
                         continue;
                     }
                     var newElem = __leaf_createElemByString(forLoopTemplate);
-                    __leaf_hydrate(newElem, datalist[j]);
+                    __leaf_hydrate(newElem, datalist[j], j);
                     if (j < domList.length) {
                         // replace
                         parentNode.insertBefore(newElem, domList[j]);
@@ -205,7 +230,7 @@ function __leaf_hydrate(elem, $) {
         // normal attributes
         (function (name, token, observables) {
             var assembleAttributesData = function (name, token) {
-                var result = __leaf_executeToken(token, $);
+                var result = __leaf_executeToken(token, $, _index);
                 if (result && result.__observers && result.postValue) {
                     result = result.value;
                 }
@@ -330,7 +355,7 @@ function __leaf_hydrate(elem, $) {
                     var node = observables[k];
                     if (node.__observers && node.postValue) {
                         node.__observers.push(function (v) {
-                            __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, templateIndex, $);
+                            __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, templateIndex, $, _index);
                         });
                     }
                 }
@@ -341,12 +366,12 @@ function __leaf_hydrate(elem, $) {
 
     // render innerText
     for (var i = 0; i < template.length; i++) {
-        __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, i, $)
+        __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, i, $, _index)
     }
 
     // children
     for (var i = 0; i < elem.children.length; i++) {
-        __leaf_hydrate(elem.children[i], $);
+        __leaf_hydrate(elem.children[i], $, _index);
     }
     return $;
 }
@@ -370,7 +395,7 @@ function __leaf_addClass(elem, className) {
     return;
 }
 
-function __leaf_executeToken(__leaf_token_origin, $) {
+function __leaf_executeToken(__leaf_token_origin, $, _index) {
     eval(__leaf_evaluateVariablesOfObject($, '$'));
     var result = eval(__leaf_token_origin);
     return result
@@ -432,7 +457,7 @@ function __leaf_parseObservablesInToken(tokenOrigin, $) {
     return observables;
 }
 
-function __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, templateIndex, $) {
+function __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups, templateIndex, $, _index) {
     var s = elem.innerHTML;
     var childLevel = 0;
     var currentTemplateIndex = 0;
@@ -487,7 +512,7 @@ function __leaf_assembleAndReplaceTopLevelInnerText(elem, template, tokenGroups,
         var targetTemplate = template[templateIndex];
         for (var j = 0; j < tokenGroups[templateIndex].length; j++) {
             var token = tokenGroups[templateIndex][j];
-            var result = __leaf_executeToken(token.origin, $);
+            var result = __leaf_executeToken(token.origin, $, _index);
             if (result && result.__observers && result.postValue) {
                 result = result.value;
             }

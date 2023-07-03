@@ -13,6 +13,7 @@
     <div class="row shadow p">
         <b>Leaf.js</b>
         <span class="g"></span>
+        <a class="mx" href="guide.html">Guide</a>
         <a class="mx" href="https://github.com/StevenZack/leafjs">Github</a>
         <a class="mx" href="leaf.js">Source Code</a>
     </div>
@@ -31,8 +32,8 @@
 <button onclick="app.counter.inc()">Click</button>
 
 <script>
-    app = renderLeaf('app', {
-        counter: createValue(0)
+    app = Leaf('app', {
+        counter: Observable(0)
     })
 </script>
                 </textarea>
@@ -44,12 +45,15 @@
                     x{{counter}}
                 </div>
                 <button onclick="app.counter.inc()">Click</button>
+
                 <script>
-                    app = renderLeaf('app', {
-                        counter: createValue(0)
+                    app = Leaf('app', {
+                        counter: Observable(0)
                     })
                 </script>
             </fieldset>
+            <br><br>
+            <a href="guide.html">-> Go see more examples</a>
         </div>
     </div>
 </body>

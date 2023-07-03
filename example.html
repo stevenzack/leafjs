@@ -15,11 +15,12 @@
         <ol>
             <li l-for="list">
                 <span>
-                    {{title}}
+                    {{title}}, {{_index}}
+                    <button l-onclick="'doRemove('+_index+')'">delete</button>
                 </span>
                 <div>
-                    <button l-for="data" onclick="doAddItem()">
-                        {{$}}
+                    <button l-for="data" l-onclick="'doAddItem('+_index+')'">
+                        {{$}},{{_index}}
                     </button>
                 </div>
             </li>
@@ -28,13 +29,16 @@
         <button onclick="doAdd()">add</button>
     </div>
     <script>
-        function doAddItem() {
-            app.list.value[0].data.append('more');
+        function doRemove(i){
+            app.list.removeAt(i)
+        }
+        function doAddItem(i) {
+            app.list.value[i].data.append('more');
         }
         function doAdd() {
             app.list.append({
-                title: 'one,',
-                data: createValue([
+                title: 'one',
+                data: Observable([
                     'one',
                     'two'
                 ])
@@ -45,10 +49,10 @@
             app.counter.value++;
             app.counter.notifyChange();
         }
-        app = renderLeaf('app', {
-            show: createValue(true),
-            counter: createValue(1),
-            list: createValue([])
+        app = Leaf('app', {
+            show: Observable(true),
+            counter: Observable(1),
+            list: Observable([])
         })
     </script>
 </body>
