@@ -604,8 +604,9 @@ function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templat
             }
         }
     }
-    elem.innerHTML = builder;
     if (elem.tagName === 'TEXTAREA') {
         elem.value = builder;
+    }else{
+        elem.innerHTML = builder;
     }
 }
