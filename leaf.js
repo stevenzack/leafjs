@@ -117,16 +117,16 @@ function __leaf_hydrate(elem, $, _index) {
     // attributes
     for (var i = 0; i < elem.attributes.length; i++) {
         var name = elem.attributes[i].name;
-        if (!name.startsWith('l-')) {
+        if (name.substring(0, 2) !== 'l-') {
             continue;
         }
 
         name = name.substring(2);
         var value = '';
-        if (name.startsWith('style-')) {
+        if (name.substring(0, 6) === 'style-') {
             value = name.substring(6);
             name = 'style';
-        } else if (name.startsWith('class-')) {
+        } else if (name.substring(0, 6) === 'class-') {
             value = name.substring(6);
             name = 'class';
         } else if (name === 'for') {
