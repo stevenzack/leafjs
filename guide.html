@@ -24,22 +24,22 @@
                 <legend>index.html</legend>
                 <p>
                     <label for="examples-sel">Choose example</label>
-                    <select id="examples-sel" onchange="updateCurrent(this.value)">
+                    <select id="examples-sel" onchange="updateCurrent(this.value)" l-value="current">
                         <optgroup label="Basic">
-                            <option value="text" l-selected="current==='text'">text</option>
-                            <option value="observable" l-selected="current==='observable'">observable</option>
+                            <option value="text">text</option>
+                            <option value="observable">observable</option>
                         </optgroup>
                         <optgroup label="Control Flow">
-                            <option value="if" l-selected="current==='if'">if</option>
-                            <option value="for" l-selected="current==='for'">for</option>
-                            <option value="for2" l-selected="current==='for2'">for 2</option>
+                            <option value="if">if</option>
+                            <option value="for">for</option>
+                            <option value="for2">for 2</option>
                         </optgroup>
                         <optgroup label="Binding">
-                            <option value="class" l-selected="current==='class'">class</option>
-                            <option value="style" l-selected="current==='style'">style</option>
-                            <option value="style2" l-selected="current==='style2'">style 2</option>
-                            <option value="two-way-binding" l-selected="current==='two-way-binding'">two-way binding</option>
-                            <option value="two-way-binding2" l-selected="current==='two-way-binding2'">two-way binding 2</option>
+                            <option value="class">class</option>
+                            <option value="style">style</option>
+                            <option value="style2">style 2</option>
+                            <option value="two-way-binding">two-way binding</option>
+                            <option value="two-way-binding2">two-way binding 2</option>
                         </optgroup>
                         <optgroup label="Array Operation">
 
@@ -94,7 +94,7 @@
                 'style': `&lt;div id="style-id"&gt;\n    <b l-style="'color:'+colors[index]">Hello Leaf.js</b>\n    <button onclick="appStyle.index.postValue(function(i){i++;return i%6;})">Toggle</button>\n</div>\n\x3Cscript>\n    appStyle = Leaf('style-id', {\n        index: Observable(0),\n        colors: ['red', 'green', 'blue','orange','pink','purple']\n    })\n\x3C/script>`,
                 'style2': `&lt;div id="style2-id"&gt;\n    <b l-style-display:none="!show">Hello Leaf.js</b>\n    <button onclick="appStyle2.show.toggle()">Toggle</button>\n</div>\n\x3Cscript>\n    appStyle2 = Leaf('style2-id', {\n        show: Observable(true),\n    })\n\x3C/script>`,
                 'two-way-binding': `&lt;div id="two-way-binding-id"&gt;\n    <div> \{{text}} </div>\n    <input type="text" l-value="text" onkeyup="appTwoWayBinding.text.postValue(this.value)">\n    <div></div>\n    <textarea rows="6" cols="10" onkeyup="appTwoWayBinding.text.postValue(this.value)">\{{text}}</textarea>\n</div>\n\x3Cscript>\n    appTwoWayBinding = Leaf('two-way-binding-id', {\n        text: Observable('initial value')\n    })\n\x3C/script>`,
-                'two-way-binding2': `&lt;div id="two-way-binding-id2"&gt;\n    <div> \{{i}} </div>\n    <button onclick="appTwoWayBinding2.i.postValue('one')">reset</button>\n    <select onchange="appTwoWayBinding2.i.postValue(this.value)">\n        <option value="one" l-selected="i==='one'">one</option>\n        <option value="two" l-selected="i==='two'">two</option>\n        <option value="three" l-selected="i==='three'">three</option>\n    </select>\n</div>\n\x3Cscript>\n    appTwoWayBinding2 = Leaf('two-way-binding-id2', {\n        i: Observable('one'),\n    })\n\x3C/script>`,
+                'two-way-binding2': `&lt;div id="two-way-binding-id2"&gt;\n    <div> \{{i}} </div>\n    <button onclick="appTwoWayBinding2.i.postValue('one')">reset</button>\n    <select onchange="appTwoWayBinding2.i.postValue(this.value)" l-value="i">\n        <option value="one">one</option>\n        <option value="two">two</option>\n        <option value="three">three</option>\n    </select>\n</div>\n\x3Cscript>\n    appTwoWayBinding2 = Leaf('two-way-binding-id2', {\n        i: Observable('one'),\n    })\n\x3C/script>`,
             }
         });
         updateCurrent(app.current.value);
