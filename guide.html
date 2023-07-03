@@ -24,7 +24,7 @@
                 <legend>index.html</legend>
                 <p>
                     <label for="examples-sel">Examples</label>
-                    <select id="examples-sel" onchange="doSelectIndex(this)">
+                    <select id="examples-sel" l-model="selected">
                         <optgroup label="Basic">
                             <option value="text">text</option>
                             <option value="observable">observable</option>
@@ -40,23 +40,20 @@
 
                         </optgroup>
                     </select>
-
-                    <input type="text" name="" id="" onkeyup="console.log(this.value)">
-                    <textarea name="" id="" cols="30" rows="10" onkeyup="console.log(this.value)"></textarea>
-                    
                 </p>
-                {{selected}}
+                <br>
+                <input type="text" l-model="message">
+                {{message}}
             </fieldset>
         </div>
-        <script>
-            function doSelectIndex(self) {
-                console.log(self.value);
-            }
-            app = Leaf('app', {
-                selected: Observable('if')
-            })
-        </script>
     </div>
+
+    <script>
+        app=Leaf('app',{
+            selected:Observable('text'),
+            message:Observable('hello'),
+        })
+    </script>
 </body>
 
 </html>

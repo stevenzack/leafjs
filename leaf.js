@@ -2,6 +2,7 @@ function Observable(data) {
     var out = {
         __observers: [],
         postValue: function (v) {
+            if (v === this.value) return;
             this.value = v;
             for (var i = 0; i < this.__observers.length; i++) {
                 this.__observers[i](v);
@@ -329,6 +330,8 @@ function __leaf_hydrate(elem, $, _index) {
         if (leftToken > -1) {
             if (char1 + char2 === '}}') {
                 var tokenOrigin = s.substring(leftToken + 2, i);
+                if (s.children && s.children.length > 0)
+                    throw new Error('Leaf.js currently don\'t support textContent binding with parentNode\'s children.length>0, it may lost the binding connection when textContent update. Please wrap your textContent with a <span> or <div>: {{' + tokenOrigin + '}}')
                 var uniqueID = __leaf_generateID(16);
                 template[template.length - 1] += uniqueID;
                 tokenGroups[tokenGroups.length - 1].push({

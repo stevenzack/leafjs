@@ -11,48 +11,14 @@
 
 <body>
     <div id="app">
-        <span l-if="show">{{counter}}</span>
-        <ol>
-            <li l-for="list">
-                <span>
-                    {{title}}, {{_index}}
-                    <button l-onclick="'doRemove('+_index+')'">delete</button>
-                </span>
-                <div>
-                    <button l-for="data" l-onclick="'doAddItem('+_index+')'">
-                        {{$}},{{_index}}
-                    </button>
-                </div>
-            </li>
-        </ol>
-        <button onclick="doChange()">click</button>
-        <button onclick="doAdd()">add</button>
+        <span>{{message}}</span>
+        <textarea name="" id="" cols="30" rows="10" onkeyup="app.message.postValue(this.value)">
+{{message}}
+        </textarea>
     </div>
     <script>
-        function doRemove(i){
-            app.list.removeAt(i)
-        }
-        function doAddItem(i) {
-            app.list.value[i].data.append('more');
-        }
-        function doAdd() {
-            app.list.append({
-                title: 'one',
-                data: Observable([
-                    'one',
-                    'two'
-                ])
-            })
-        }
-        function doChange() {
-            app.show.postValue(!app.show.value);
-            app.counter.value++;
-            app.counter.notifyChange();
-        }
         app = Leaf('app', {
-            show: Observable(true),
-            counter: Observable(1),
-            list: Observable([])
+            message: Observable('text')
         })
     </script>
 </body>
