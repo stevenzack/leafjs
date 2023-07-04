@@ -82,7 +82,7 @@ function Leaf(elemOrId, $) {
     if (!elemOrId || !(elemOrId instanceof HTMLElement)) {
         throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elemOrId);
     }
-    return __leaf_hydrate(elemOrId, $);
+    return __leaf_hydrate(elemOrId, $, $, undefined);
 }
 function embedHTML(callback, elemOrId) {
     if (elemOrId) {
@@ -178,7 +178,7 @@ function __leaf_startsWith(s, sep) {
     }
     return s.substring(0, sep.length) === sep;
 }
-function __leaf_hydrate(elem, $, _index) {
+function __leaf_hydrate(elem, $, _root, _index) {
     var s = elem.innerHTML;
 
     // attributes
@@ -198,7 +198,7 @@ function __leaf_hydrate(elem, $, _index) {
             name = 'class';
         } else if (name === 'for') {
             var token = elem.attributes[i].value;
-            var result = __leaf_executeToken(token, $, _index);
+            var result = __leaf_executeToken(token, $, _root, _index);
             if (!result) {
                 throw new Error('the returned type is not an observable<Array>: l-for="' + token + '", instead it is ' + result.value)
             }
@@ -240,7 +240,7 @@ function __leaf_hydrate(elem, $, _index) {
                         continue;
                     }
                     var newElem = __leaf_createElemByString(forLoopTemplate);
-                    __leaf_hydrate(newElem, datalist[j], j);
+                    __leaf_hydrate(newElem, datalist[j], _root, j);
                     if (j < domList.length) {
                         // replace
                         parentNode.insertBefore(newElem, domList[j]);
@@ -297,7 +297,7 @@ function __leaf_hydrate(elem, $, _index) {
         // normal attributes
         (function (name, token, observables) {
             var assembleAttributesData = function (name, token) {
-                var result = __leaf_executeToken(token, $, _index);
+                var result = __leaf_executeToken(token, $, _root, _index);
                 if (result && result.__observers && result.postValue) {
                     result = result.value;
                 }
@@ -452,7 +452,7 @@ function __leaf_hydrate(elem, $, _index) {
                     var node = observables[k];
                     if (node.__observers && node.postValue) {
                         node.__observers.push(function (v) {
-                            __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templateIndex, $, _index);
+                            __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templateIndex, $, _root, _index);
                         });
                     }
                 }
@@ -463,12 +463,12 @@ function __leaf_hydrate(elem, $, _index) {
 
     // render innerText
     for (var i = 0; i < template.length; i++) {
-        __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, i, $, _index)
+        __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, i, $, _root, _index)
     }
 
     // children
     for (var i = 0; i < elem.children.length; i++) {
-        __leaf_hydrate(elem.children[i], $, _index);
+        __leaf_hydrate(elem.children[i], $, _root, _index);
     }
     return $;
 }
@@ -510,7 +510,7 @@ function __leaf_desanitizeHTML(s) {
     s = s.replace('&gt;', '>');
     return s;
 }
-function __leaf_executeToken(__leaf_token_origin, $, _index) {
+function __leaf_executeToken(__leaf_token_origin, $, _root, _index) {
     eval(__leaf_evaluateVariablesOfObject($, '$'));
     var result = eval(__leaf_token_origin);
     return result
@@ -600,7 +600,7 @@ function __leaf_isEmptyTag(tagName) {
     return true;
 }
 
-function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templateIndex, $, _index) {
+function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templateIndex, $, _root, _index) {
     var s = elem.innerHTML;
     var childLevel = 0;
     var currentTemplateIndex = 0;
@@ -674,7 +674,7 @@ function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templat
         var targetTemplate = template[templateIndex];
         for (var j = 0; j < tokenGroups[templateIndex].length; j++) {
             var token = tokenGroups[templateIndex][j];
-            var result = __leaf_executeToken(token.origin, $, _index);
+            var result = __leaf_executeToken(token.origin, $, _root, _index);
             if (result && result.__observers && result.postValue) {
                 result = result.value;
             }

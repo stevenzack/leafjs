@@ -10,3 +10,5 @@ We use pure basic JavaScript, to support the oldest browser early than 2010
 - [x]check self closing tag
 - [x]prevent xss
 - [x]includeHTML
+- _root
+- l-with

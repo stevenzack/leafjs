@@ -1,0 +1,23 @@
+<ol id="root-id">
+    <li l-for="list">
+        {{_root.info.title}}:
+        {{name}}
+    </li>
+</ol>
+<script>
+    appRoot = Leaf('root-id', {
+        info: {
+            title: 'Root Title'
+        },
+        list: [
+            {
+                name: 'one',
+                age: 17
+            },
+            {
+                name: 'two',
+                age: 18
+            }
+        ]
+    })
+</script>
