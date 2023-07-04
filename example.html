@@ -11,14 +11,14 @@
 
 <body>
 <div id="two-way-binding-id2">
+    <input type="text" l-value="i" onchange="app.i.postValue(this.value)">
     <span>{{i}}</span>
-    <input type="text" l-value="i">
-    <textarea onchange="app.i.postValue(this.value)"></textarea>
 </div>
 <script>
     app = Leaf('two-way-binding-id2', {
         i: Observable('<one>'),
     })
+   
 </script>
 </body>
 

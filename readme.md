@@ -7,6 +7,6 @@ We use pure basic JavaScript, to support the oldest browser early than 2010
 # todo
 
 - [x]two way binding issue: multiple input binding not all working
-- check self closing tag
+- [x]check self closing tag
 - [x]prevent xss
 - includeHTML

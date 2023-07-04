@@ -102,7 +102,7 @@ function Leaf(elemOrId, $) {
     }
     return __leaf_hydrate(elemOrId, $);
 }
-function __leaf_isLowerCaseEnglish(c) {
+function __leaf_isEnglishAlphabet(c) {
     var l = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
     for (var i = 0; i < l.length; i++) {
         if (c === l.charAt(i)) {
@@ -305,9 +305,12 @@ function __leaf_hydrate(elem, $, _index) {
     var tokenGroups = [
         [],
     ];
-    for (var i = 0; i < s.length - 1; i++) {
+    for (var i = 0; i < s.length; i++) {
         var char1 = s.charAt(i);
-        var char2 = s.charAt(i + 1);
+        var char2 = '';
+        if (i < s.length - 1) {
+            char2 = s.charAt(i + 1)
+        }
         if (char1 === '<') {
             if (char2 === '/') {
                 var foundEnding = false;
@@ -329,8 +332,32 @@ function __leaf_hydrate(elem, $, _index) {
                 continue;
             }
 
-            if (__leaf_isLowerCaseEnglish(char2)) {
+            if (__leaf_isEnglishAlphabet(char2)) {
                 childLevel++;
+                i++;
+                var tagStarted = i;
+                for (; i < s.length; i++) {
+                    char1 = s.charAt(i);
+                    char2 = '';
+                    if (i < s.length - 1) {
+                        char2 = s.charAt(i + 1)
+                    }
+                    if (char1 + char2 === '/>') {
+                        i++;
+                        childLevel--;
+                        break;
+                    }
+                    if (char1 === '>') {
+                        if (__leaf_isEmptyTag(s.substring(tagStarted, i))) {
+                            childLevel--;
+                        }
+                        break;
+                    }
+                }
+                if (childLevel === 0) {
+                    template.push('');
+                    tokenGroups.push([]);
+                }
                 continue;
             }
             continue;
@@ -565,11 +592,30 @@ function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templat
                 continue;
             }
 
-            if (i >= s.length - 2) {
-                builder += char2;
-            }
-            if (__leaf_isLowerCaseEnglish(char2)) {
+            if (__leaf_isEnglishAlphabet(char2)) {
                 childLevel++;
+                i++
+                var tagStarted = i;
+                for (; i < s.length; i++) {
+                    char1 = s.charAt(i);
+                    builder += char1;
+                    char2 = '';
+                    if (i < s.length - 1) {
+                        char2 = s.charAt(i + 1)
+                    }
+                    if (char1 + char2 === '/>') {
+                        i++;
+                        childLevel--;
+                        builder += char2;
+                        break;
+                    }
+                    if (char1 === '>') {
+                        if (__leaf_isEmptyTag(s.substring(tagStarted, i))) {
+                            childLevel--;
+                        }
+                        break;
+                    }
+                }
             }
             continue;
         }
