@@ -87,7 +87,7 @@ function Observable(data: any): LeafObservable {
 class Dom {
     _parentDom: Dom | null;
     children: Dom[] = [];
-    elem: HTMLElement;
+    elem: any;
     data: any;
     _rootData: any;
     _index: number | undefined;
@@ -224,7 +224,7 @@ class LeafAttribute {
 
         // parse
         if (__leaf_startsWith(this.name, 'style-')) {
-            this.value = name.substring(6);
+            this.value = this.name.substring(6);
             this.name = 'style';
         } else if (__leaf_startsWith(this.name, 'class:')) {
             this.value = this.name.substring(6);
@@ -277,7 +277,7 @@ class LeafAttribute {
         }
 
         if (this.name === 'value') {
-            this.dom.elem['value'] = result;
+            this.dom.elem.value = result;
         } else {
             this.dom.elem.setAttribute(this.name, result);
         }

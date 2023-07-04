@@ -201,7 +201,7 @@ var LeafAttribute = /** @class */ (function () {
         this.token = new LeafToken(this.dom, tokenOrigin);
         // parse
         if (__leaf_startsWith(this.name, 'style-')) {
-            this.value = name.substring(6);
+            this.value = this.name.substring(6);
             this.name = 'style';
         }
         else if (__leaf_startsWith(this.name, 'class:')) {
@@ -255,7 +255,7 @@ var LeafAttribute = /** @class */ (function () {
             return;
         }
         if (this.name === 'value') {
-            this.dom.elem['value'] = result;
+            this.dom.elem.value = result;
         }
         else {
             this.dom.elem.setAttribute(this.name, result);
