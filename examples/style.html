@@ -1,0 +1,10 @@
+<div id="style-id">
+    <b l-style="'color:'+colors[index]">Hello Leaf.js</b>
+    <button onclick="appStyle.index.postValue(function(i){i++;return i%6;})">Toggle</button>
+</div>
+<script>
+    appStyle = Leaf('style-id', {
+        index: Observable(0),
+        colors: ['red', 'green', 'blue','orange','pink','purple']
+    })
+</script>

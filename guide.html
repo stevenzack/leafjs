@@ -10,13 +10,8 @@
 </head>
 
 <body>
-    <div class="row shadow p">
-        <a href="/"><b>Leaf.js</b></a>
-        <span class="g"></span>
-        <a class="mx" href="guide.html">Guide</a>
-        <a class="mx" href="https://github.com/StevenZack/leafjs">Github</a>
-        <a class="mx" href="leaf.js">Source Code</a>
-    </div>
+    <embed src="header.html" type="text/html" height="36" width="100%">
+
     <div class="col w" id="app">
         <div class="col maxw3xl w">
             <h1>Quick Guide</h1>
@@ -76,26 +71,24 @@
         }
         function updateCurrent(value) {
             app.current.postValue(value);
-            var sourceCode = app.code[value];
-            var s = __leaf_desanitizeHTML(sourceCode);
-            document.getElementById('result').innerHTML = s;
-            document.getElementById('sourceCode').value = s;
-            runScriptInHTML(s);
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    var s = xhr.responseText;
+                    if (xhr.status === 200) {
+                        document.getElementById('result').innerHTML = s;
+                        document.getElementById('sourceCode').value = s;
+                        runScriptInHTML(s);
+                    } else {
+                        document.getElementById('result').innerHTML = s;
+                    }
+                }
+            }
+            xhr.open('GET', 'examples/' + value + '.html');
+            xhr.send();
         }
         app = Leaf('app', {
             current: Observable('text'),
-            code: {
-                'text': `&lt;div id="text-id"&gt;\{{message}}</div>\n\x3Cscript>\n    Leaf('text-id', {\n        message: 'Hello Leaf.js'\n    })\n\x3C/script>`,
-                'observable': `&lt;div id="observable-id"&gt;\n    <span>\{{message}} </span>\n    <button onclick="appObservable.message.postValue('changed')">change value</button>\n</div>\n\x3Cscript>\n    appObservable=Leaf('observable-id',{\n        message:Observable('hello Leaf.js')\n    })\n\x3C/script>\n`,
-                'if': `&lt;div id="if-id"&gt;\n    <span l-if="show">Show</span>\n    <button onclick="appIf.show.postValue(!appIf.show.value)">Toggle</button>\n</div>\n\x3Cscript>\n    appIf=Leaf('if-id',{\n        show:Observable(true),\n    })\n\x3C/script>`,
-                'for': `&lt;div id="for-id"&gt;\n    <ol>\n        <li l-for="list">\{{$}}</li>\n    </ol>\n    <button onclick="appIf.list.update(function(l){l.push('item '+l.length)})">Add</button>\n</div>\n\x3Cscript>\n    appIf=Leaf('for-id',{\n        list:Observable([\n            'first'\n        ]),\n    })\n\x3C/script>`,
-                'for2': `&lt;ul id="for2-id"&gt;\n    <button onclick="appFor2.list.append({title:'Added New One',subtitle:'nothing here'})">add</button>\n    <li l-for="list">\n        <div>\{{_index}} \{{title}} </div>\n        <small> \{{subtitle}} </small>\n        <button l-onclick="'appFor2.list.removeAt('+_index+')'">delete</button>\n    </li>\n</ul>\n\x3Cscript>\n    appFor2=Leaf('for2-id',{\n        list:Observable([\n            {\n                title:'Todays Top News',\n                subtitle:'Here we have...'\n            },\n            {\n                title:'Breaking News',\n                subtitle:'We nailed it!!'\n            }\n        ])\n    })\n\x3C/script>`,
-                'class': `&lt;div id="class-id"&gt;\n    <div l-class:hide="hide">Hello Leaf.js</div>\n    <button onclick="appClass.hide.toggle()">Toggle</button>\n</div>\n\x3Cscript>\n    appClass = Leaf('class-id', {\n        hide: Observable(false),\n    })\n\x3C/script>`,
-                'style': `&lt;div id="style-id"&gt;\n    <b l-style="'color:'+colors[index]">Hello Leaf.js</b>\n    <button onclick="appStyle.index.postValue(function(i){i++;return i%6;})">Toggle</button>\n</div>\n\x3Cscript>\n    appStyle = Leaf('style-id', {\n        index: Observable(0),\n        colors: ['red', 'green', 'blue','orange','pink','purple']\n    })\n\x3C/script>`,
-                'style2': `&lt;div id="style2-id"&gt;\n    <b l-style-display:none="!show">Hello Leaf.js</b>\n    <button onclick="appStyle2.show.toggle()">Toggle</button>\n</div>\n\x3Cscript>\n    appStyle2 = Leaf('style2-id', {\n        show: Observable(true),\n    })\n\x3C/script>`,
-                'two-way-binding': `&lt;div id="two-way-binding-id"&gt;\n    <div> \{{text}} </div>\n    <input type="text" l-value="text" onkeyup="appTwoWayBinding.text.postValue(this.value)">\n    <div></div>\n    <textarea rows="6" cols="10" onkeyup="appTwoWayBinding.text.postValue(this.value)">\{{text}}</textarea>\n</div>\n\x3Cscript>\n    appTwoWayBinding = Leaf('two-way-binding-id', {\n        text: Observable('initial value')\n    })\n\x3C/script>`,
-                'two-way-binding2': `&lt;div id="two-way-binding-id2"&gt;\n    <div> \{{i}} </div>\n    <button onclick="appTwoWayBinding2.i.postValue('one')">reset</button>\n    <select onchange="appTwoWayBinding2.i.postValue(this.value)" l-value="i">\n        <option value="one">one</option>\n        <option value="two">two</option>\n        <option value="three">three</option>\n    </select>\n</div>\n\x3Cscript>\n    appTwoWayBinding2 = Leaf('two-way-binding-id2', {\n        i: Observable('one'),\n    })\n\x3C/script>`,
-            }
         });
         updateCurrent(app.current.value);
     </script>

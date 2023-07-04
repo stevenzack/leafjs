@@ -1,0 +1,9 @@
+<div id="observable-id">
+    <span>{{message}} </span>
+    <button onclick="appObservable.message.postValue('changed')">change value</button>
+</div>
+<script>
+    appObservable=Leaf('observable-id',{
+        message:Observable('hello Leaf.js')
+    })
+</script>

@@ -1,0 +1,9 @@
+<div id="class-id">
+    <div l-class:hide="hide">Hello Leaf.js</div>
+    <button onclick="appClass.hide.toggle()">Toggle</button>
+</div>
+<script>
+    appClass = Leaf('class-id', {
+        hide: Observable(false),
+    })
+</script>

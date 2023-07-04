@@ -1,0 +1,9 @@
+<div id="if-id">
+    <span l-if="show">Show</span>
+    <button onclick="appIf.show.postValue(!appIf.show.value)">Toggle</button>
+</div>
+<script>
+    appIf=Leaf('if-id',{
+        show:Observable(true),
+    })
+</script>

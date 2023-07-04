@@ -1,0 +1,9 @@
+<div id="style2-id">
+    <b l-style-display:none="!show">Hello Leaf.js</b>
+    <button onclick="appStyle2.show.toggle()">Toggle</button>
+</div>
+<script>
+    appStyle2 = Leaf('style2-id', {
+        show: Observable(true),
+    })
+</script>

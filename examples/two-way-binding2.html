@@ -1,0 +1,14 @@
+<div id="two-way-binding-id2">
+    <div> {{i}} </div>
+    <button onclick="appTwoWayBinding2.i.postValue('one')">reset</button>
+    <select onchange="appTwoWayBinding2.i.postValue(this.value)" l-value="i">
+        <option value="one">one</option>
+        <option value="two">two</option>
+        <option value="three">three</option>
+    </select>
+</div>
+<script>
+    appTwoWayBinding2 = Leaf('two-way-binding-id2', {
+        i: Observable('one'),
+    })
+</script>

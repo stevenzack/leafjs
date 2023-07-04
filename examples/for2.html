@@ -1,0 +1,22 @@
+<ul id="for2-id">
+    <button onclick="appFor2.list.append({title:'Added New One',subtitle:'nothing here'})">add</button>
+    <li l-for="list">
+        <div>{{_index}} {{title}} </div>
+        <small> {{subtitle}} </small>
+        <button l-onclick="'appFor2.list.removeAt('+_index+')'">delete</button>
+    </li>
+</ul>
+<script>
+    appFor2=Leaf('for2-id',{
+        list:Observable([
+            {
+                title:'Todays Top News',
+                subtitle:'Here we have...'
+            },
+            {
+                title:'Breaking News',
+                subtitle:'We nailed it!!'
+            }
+        ])
+    })
+</script>
