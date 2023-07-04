@@ -1,26 +1,87 @@
 
-class Observable {
-    __observers: ((v: any) => void)[] = [];
+interface LeafObservable {
+    __observers: ((v: any) => void)[];
     value: any;
-    postValue: (valueOrFunc: any | ((a: any) => any)) => void = function (valueOrFunc: any | ((a: any) => any)) {
-        if (typeof valueOrFunc === 'function') {
-            valueOrFunc = valueOrFunc(this.value);
-        }
-        if ((typeof valueOrFunc) != (typeof this.value)) {
-            throw new Error('postValue() type mismatch: ' + (typeof valueOrFunc) + ' vs ' + (typeof this.value));
-        }
-        if (valueOrFunc === this.value) return;
-        this.value = valueOrFunc;
-        for (var i = 0; i < this.__observers.length; i++) {
-            this.__observers[i](this.value);
-        }
+    postValue: (valueOrFunc: any | ((a: any) => any)) => void;
+    update: (data: any) => void;
+    notifyChange: () => void;
+}
+function Observable(data: any): LeafObservable {
+    var out: any = {
+        __observers: [],
+        value: data,
+        postValue: function (valueOrFunc: any | ((a: any) => any)) {
+            if (typeof valueOrFunc === 'function') {
+                valueOrFunc = valueOrFunc(this.value);
+            }
+            if ((typeof valueOrFunc) != (typeof this.value)) {
+                throw new Error('postValue() type mismatch: ' + (typeof valueOrFunc) + ' vs ' + (typeof this.value));
+            }
+            if (valueOrFunc === this.value) return;
+            this.value = valueOrFunc;
+            for (var i = 0; i < this.__observers.length; i++) {
+                this.__observers[i](this.value);
+            }
+        },
+        update: function (fn: (data: any) => void) {
+            fn(this.value);
+            this.notifyChange();
+        },
+        notifyChange: function () {
+            for (var i = 0; i < this.__observers.length; i++) {
+                this.__observers[i](this.value);
+            }
+        },
     };
+    if (data instanceof Array) {
+        out.append = function (v: any) {
+            if (v instanceof Array) {
+                this.value.push(v);
+            } else {
+                throw new Error('invalid operation: calling append on a non-array observable value')
+            }
+            this.notifyChange();
+        };
+        out.removeAt = function (i: number) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 1);
+            this.notifyChange();
+        };
+        out.replace = function (i: number, v: any) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 1, v);
+            this.notifyChange();
+        };
+        out.insertAfter = function (i: number, v: any) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 0, v);
+            this.notifyChange();
+        }
 
-    constructor(data: any) {
-        this.value = data;
-        return this;
+    } else if (typeof data === 'number') {
+        out.inc = function (v: number | undefined) {
+            if (!v) {
+                this.value++;
+            } else if (typeof v === 'number') {
+                this.value += v;
+            } else {
+                throw new Error('invalid input type for inc():' + (typeof v))
+            }
+            this.notifyChange();
+        }
+    } else if (typeof data === 'boolean') {
+        out.toggle = function () {
+            this.value = !this.value;
+            this.notifyChange();
+        }
     }
-
+    return out;
 }
 
 class Dom {
@@ -31,7 +92,7 @@ class Dom {
     _rootData: any;
     _index: number | undefined;
     attributes: LeafAttribute[] = [];
-    textContent: LeafAttribute | null;
+    textContent: LeafTextContent;
 
     constructor(elem: HTMLElement, data: any, parentDom: Dom | null = null) {
         this._parentDom = parentDom;
@@ -42,6 +103,10 @@ class Dom {
         }
 
         this.parseLeafAttributes();
+        if (LeafTextContent.checkIfNeeded(this)) {
+            this.textContent = new LeafTextContent(this);
+        }
+
         // children
         for (var i = 0; i < elem.children.length; i++) {
             this.children.push(new Dom(elem.children[i] as HTMLElement, data, this))
@@ -61,9 +126,16 @@ class Dom {
         for (var i = 0; i < this.attributes.length; i++) {
             this.attributes[i].execute();
         }
+        if (this.textContent) {
+            this.textContent.execute();
+        }
     }
 }
 function __leaf_executeToken(__leaf_token_origin: string, $: any, _root: any, _index: number | undefined): any {
+    console.log(__leaf_token_origin);
+    console.log($);
+
+
     eval(__leaf_unwrapVariablesOfany($, '$'));
     var result = eval(__leaf_token_origin);
     return result
@@ -89,7 +161,7 @@ class LeafToken {
     dom: Dom;
     origin: string;
     uniqueID: string;
-    observableRefs: Observable[] = [];
+    observableRefs: LeafObservable[] = [];
     constructor(elem: Dom, tokenOrigin: string) {
         this.dom = elem;
         this.origin = tokenOrigin;
@@ -213,7 +285,102 @@ class LeafAttribute {
 }
 
 class LeafTextContent {
+    dom: Dom;
+    tokens: LeafToken[] = [];
+    template: string = '';
 
+    constructor(dom: Dom) {
+        this.dom = dom;
+        const nodes = dom.elem.childNodes;
+
+        var observableCollection: LeafObservable[] = [];
+        var existsInArray = function (v: LeafObservable, array: LeafObservable[]): boolean {
+            for (var i = 0; i < observableCollection.length; i++) {
+                if (observableCollection[i] === v) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        for (var i = 0; i < nodes.length; i++) {
+            // parse
+            var s = String((nodes[i] as Node).nodeValue);
+
+            var left = -1;
+            for (var j = 0; j < s.length; j++) {
+                var char1 = s.charAt(j);
+
+                var char2 = '';
+                if (j < s.length - 1) {
+                    char2 = s.charAt(j + 1);
+                }
+                if (char1 + char2 === '{{') {
+                    left = j;
+                    continue;
+                }
+
+                if (left > -1 && char1 + char2 === '}}') {
+                    var tokenOrigin = s.substring(left + 2, j);
+
+                    var t = new LeafToken(this.dom, tokenOrigin);
+                    t.uniqueID = __leaf_generateID(16);
+                    for (var k = 0; k < t.observableRefs.length; k++) {
+                        const obs = t.observableRefs[k];
+                        if (existsInArray(obs, observableCollection)) {
+                            continue;
+                        }
+                        observableCollection.push(obs);
+
+                        // listen
+                        const self = this;
+                        obs.__observers.push(function (v) {
+                            self.execute();
+                        });
+                    }
+                    this.tokens.push(t);
+
+                    left = -1;
+                    j++;
+                    this.template += t.uniqueID;
+                    continue;
+                }
+
+                if (left === -1) {
+                    this.template += char1;
+                }
+
+            }
+        }
+
+        this.execute();
+    }
+
+    execute() {
+        var s = this.template;
+        for (var i = 0; i < this.tokens.length; i++) {
+            const result = this.tokens[i].execute();
+            s = s.replace(this.tokens[i].uniqueID, result);
+        }
+        this.dom.elem.innerText = s;
+    }
+
+    public static checkIfNeeded(dom: Dom): boolean {
+        // check
+        const nodes = dom.elem.childNodes;
+        if (dom.elem.children.length > 0) {
+            for (var i = 0; i < nodes.length; i++) {
+                var n = nodes[i];
+                if (n && n instanceof Node) {
+                    var s = String((n as Node).nodeValue);
+                    if (s.indexOf('{{') > -1) {
+                        throw new Error('Leaf.js currently don\'t support textContent binding with parentNode\'s other children.length>0, it may lost the binding connection when textContent update. Please wrap your textContent with a <span> or <div>: ' + s)
+                    }
+                }
+            }
+            return false;
+        }
+        return true;
+    }
 }
 
 function Leaf(id: string, data: object): object {

@@ -1,7 +1,8 @@
-var Observable = /** @class */ (function () {
-    function Observable(data) {
-        this.__observers = [];
-        this.postValue = function (valueOrFunc) {
+function Observable(data) {
+    var out = {
+        __observers: [],
+        value: data,
+        postValue: function (valueOrFunc) {
             if (typeof valueOrFunc === 'function') {
                 valueOrFunc = valueOrFunc(this.value);
             }
@@ -14,12 +15,71 @@ var Observable = /** @class */ (function () {
             for (var i = 0; i < this.__observers.length; i++) {
                 this.__observers[i](this.value);
             }
+        },
+        update: function (fn) {
+            fn(this.value);
+            this.notifyChange();
+        },
+        notifyChange: function () {
+            for (var i = 0; i < this.__observers.length; i++) {
+                this.__observers[i](this.value);
+            }
+        }
+    };
+    if (data instanceof Array) {
+        out.append = function (v) {
+            if (v instanceof Array) {
+                this.value.push(v);
+            }
+            else {
+                throw new Error('invalid operation: calling append on a non-array observable value');
+            }
+            this.notifyChange();
         };
-        this.value = data;
-        return this;
+        out.removeAt = function (i) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 1);
+            this.notifyChange();
+        };
+        out.replace = function (i, v) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 1, v);
+            this.notifyChange();
+        };
+        out.insertAfter = function (i, v) {
+            if (typeof i !== 'number') {
+                throw new Error('removeAt() argument type is not number');
+            }
+            this.value.splice(i, 0, v);
+            this.notifyChange();
+        };
     }
-    return Observable;
-}());
+    else if (typeof data === 'number') {
+        out.inc = function (v) {
+            if (!v) {
+                this.value++;
+            }
+            else if (typeof v === 'number') {
+                this.value += v;
+            }
+            else {
+                throw new Error('invalid input type for inc():' + (typeof v));
+            }
+            this.notifyChange();
+        };
+    }
+    else if (typeof data === 'boolean') {
+        out.toggle = function () {
+            this.value = !this.value;
+            this.notifyChange();
+        };
+    }
+    return out;
+}
 var Dom = /** @class */ (function () {
     function Dom(elem, data, parentDom) {
         if (parentDom === void 0) { parentDom = null; }
@@ -32,6 +92,9 @@ var Dom = /** @class */ (function () {
             this._rootData = data;
         }
         this.parseLeafAttributes();
+        if (LeafTextContent.checkIfNeeded(this)) {
+            this.textContent = new LeafTextContent(this);
+        }
         // children
         for (var i = 0; i < elem.children.length; i++) {
             this.children.push(new Dom(elem.children[i], data, this));
@@ -50,10 +113,15 @@ var Dom = /** @class */ (function () {
         for (var i = 0; i < this.attributes.length; i++) {
             this.attributes[i].execute();
         }
+        if (this.textContent) {
+            this.textContent.execute();
+        }
     };
     return Dom;
 }());
 function __leaf_executeToken(__leaf_token_origin, $, _root, _index) {
+    console.log(__leaf_token_origin);
+    console.log($);
     eval(__leaf_unwrapVariablesOfany($, '$'));
     var result = eval(__leaf_token_origin);
     return result;
@@ -197,8 +265,92 @@ var LeafAttribute = /** @class */ (function () {
     return LeafAttribute;
 }());
 var LeafTextContent = /** @class */ (function () {
-    function LeafTextContent() {
+    function LeafTextContent(dom) {
+        this.tokens = [];
+        this.template = '';
+        this.dom = dom;
+        var nodes = dom.elem.childNodes;
+        var observableCollection = [];
+        var existsInArray = function (v, array) {
+            for (var i = 0; i < observableCollection.length; i++) {
+                if (observableCollection[i] === v) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        for (var i = 0; i < nodes.length; i++) {
+            // parse
+            var s = String(nodes[i].nodeValue);
+            var left = -1;
+            for (var j = 0; j < s.length; j++) {
+                var char1 = s.charAt(j);
+                var char2 = '';
+                if (j < s.length - 1) {
+                    char2 = s.charAt(j + 1);
+                }
+                if (char1 + char2 === '{{') {
+                    left = j;
+                    continue;
+                }
+                if (left > -1 && char1 + char2 === '}}') {
+                    var tokenOrigin = s.substring(left + 2, j);
+                    var t = new LeafToken(this.dom, tokenOrigin);
+                    t.uniqueID = __leaf_generateID(16);
+                    var _loop_1 = function () {
+                        var obs = t.observableRefs[k];
+                        if (existsInArray(obs, observableCollection)) {
+                            return "continue";
+                        }
+                        observableCollection.push(obs);
+                        // listen
+                        var self_1 = this_1;
+                        obs.__observers.push(function (v) {
+                            self_1.execute();
+                        });
+                    };
+                    var this_1 = this;
+                    for (var k = 0; k < t.observableRefs.length; k++) {
+                        _loop_1();
+                    }
+                    this.tokens.push(t);
+                    left = -1;
+                    j++;
+                    this.template += t.uniqueID;
+                    continue;
+                }
+                if (left === -1) {
+                    this.template += char1;
+                }
+            }
+        }
+        this.execute();
     }
+    LeafTextContent.prototype.execute = function () {
+        var s = this.template;
+        for (var i = 0; i < this.tokens.length; i++) {
+            var result = this.tokens[i].execute();
+            s = s.replace(this.tokens[i].uniqueID, result);
+        }
+        this.dom.elem.innerText = s;
+    };
+    LeafTextContent.checkIfNeeded = function (dom) {
+        // check
+        var nodes = dom.elem.childNodes;
+        if (dom.elem.children.length > 0) {
+            for (var i = 0; i < nodes.length; i++) {
+                var n = nodes[i];
+                if (n && n instanceof Node) {
+                    var s = String(n.nodeValue);
+                    if (s.indexOf('{{') > -1) {
+                        throw new Error('Leaf.js currently don\'t support textContent binding with parentNode\'s other children.length>0, it may lost the binding connection when textContent update. Please wrap your textContent with a <span> or <div>: ' + s);
+                    }
+                }
+            }
+            return false;
+        }
+        return true;
+    };
     return LeafTextContent;
 }());
 function Leaf(id, data) {
