@@ -279,9 +279,9 @@ function __leaf_hydrate(elem, $, _index) {
                     }
                 } else {
                     if (name === 'value') {
-                        elem.value = __leaf_sanitizeHTML(result)
+                        elem.value = result;
                     } else {
-                        elem.setAttribute(name, __leaf_sanitizeHTML(result));
+                        elem.setAttribute(name, result);
                     }
                 }
             };
@@ -606,7 +606,7 @@ function __leaf_assembleAndReplaceInnerText(elem, template, tokenGroups, templat
     }
     if (elem.tagName === 'TEXTAREA') {
         elem.value = builder;
-    }else{
+    } else {
         elem.innerHTML = builder;
     }
 }
