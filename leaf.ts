@@ -1,67 +1,79 @@
-var Observable = /** @class */ (function () {
-    function Observable(data) {
-        this.__observers = [];
-        this.postValue = function (valueOrFunc) {
-            if (typeof valueOrFunc === 'function') {
-                valueOrFunc = valueOrFunc(this.value);
-            }
-            if ((typeof valueOrFunc) != (typeof this.value)) {
-                throw new Error('postValue() type mismatch: ' + (typeof valueOrFunc) + ' vs ' + (typeof this.value));
-            }
-            if (valueOrFunc === this.value)
-                return;
-            this.value = valueOrFunc;
-            for (var i = 0; i < this.__observers.length; i++) {
-                this.__observers[i](this.value);
-            }
-        };
+
+class Observable {
+    __observers: ((v: any) => void)[] = [];
+    value: any;
+    postValue: (valueOrFunc: any | ((a: any) => any)) => void = function (valueOrFunc: any | ((a: any) => any)) {
+        if (typeof valueOrFunc === 'function') {
+            valueOrFunc = valueOrFunc(this.value);
+        }
+        if ((typeof valueOrFunc) != (typeof this.value)) {
+            throw new Error('postValue() type mismatch: ' + (typeof valueOrFunc) + ' vs ' + (typeof this.value));
+        }
+        if (valueOrFunc === this.value) return;
+        this.value = valueOrFunc;
+        for (var i = 0; i < this.__observers.length; i++) {
+            this.__observers[i](this.value);
+        }
+    };
+
+    constructor(data: any) {
         this.value = data;
         return this;
     }
-    return Observable;
-}());
-var Dom = /** @class */ (function () {
-    function Dom(elem, data, parentDom) {
-        if (parentDom === void 0) { parentDom = null; }
-        this.children = [];
-        this.attributes = [];
+
+}
+
+class Dom {
+    _parentDom: Dom | null;
+    children: Dom[] = [];
+    elem: HTMLElement;
+    data: any;
+    _rootData: any;
+    _index: number | undefined;
+    attributes: LeafAttribute[] = [];
+    textContent: LeafAttribute | null;
+
+    constructor(elem: HTMLElement, data: any, parentDom: Dom | null = null) {
         this._parentDom = parentDom;
         this.elem = elem;
         this.data = data;
         if (!parentDom) {
             this._rootData = data;
         }
+
         this.parseLeafAttributes();
         // children
         for (var i = 0; i < elem.children.length; i++) {
-            this.children.push(new Dom(elem.children[i], data, this));
+            this.children.push(new Dom(elem.children[i] as HTMLElement, data, this))
         }
         return this;
     }
-    Dom.prototype.parseLeafAttributes = function () {
+    private parseLeafAttributes() {
         for (var i = 0; i < this.elem.attributes.length; i++) {
             var attr = this.elem.attributes[i];
             if (__leaf_startsWith(attr.name, 'l-')) {
                 this.attributes.push(new LeafAttribute(this, attr.name, attr.value));
             }
         }
-    };
-    Dom.prototype.execute = function () {
+    }
+
+    execute() {
         for (var i = 0; i < this.attributes.length; i++) {
             this.attributes[i].execute();
         }
-    };
-    return Dom;
-}());
-function __leaf_executeToken(__leaf_token_origin, $, _root, _index) {
+    }
+}
+function __leaf_executeToken(__leaf_token_origin: string, $: any, _root: any, _index: number | undefined): any {
     eval(__leaf_unwrapVariablesOfany($, '$'));
     var result = eval(__leaf_token_origin);
-    return result;
+    return result
 }
-function __leaf_unwrapVariablesOfany(obj, objName) {
+
+function __leaf_unwrapVariablesOfany(obj: any, objName: string): string {
     if (typeof obj !== 'object') {
         return '';
     }
+
     var builder = '';
     for (var key in obj) {
         var v = obj[key];
@@ -73,9 +85,12 @@ function __leaf_unwrapVariablesOfany(obj, objName) {
     }
     return builder;
 }
-var LeafToken = /** @class */ (function () {
-    function LeafToken(elem, tokenOrigin) {
-        this.observableRefs = [];
+class LeafToken {
+    dom: Dom;
+    origin: string;
+    uniqueID: string;
+    observableRefs: Observable[] = [];
+    constructor(elem: Dom, tokenOrigin: string) {
         this.dom = elem;
         this.origin = tokenOrigin;
         var variableStarted = -1;
@@ -109,70 +124,73 @@ var LeafToken = /** @class */ (function () {
             var observable = this.dom.data[variableName];
             if (observable && observable.postValue && observable.__observers) {
                 if (variableStarted > 0 && tokenOrigin[variableStarted - 1] === '.') {
-                }
-                else {
+                } else {
                     this.observableRefs.push(observable);
                 }
             }
         }
         return this;
     }
-    LeafToken.prototype.execute = function () {
+
+    execute(): any {
         return __leaf_executeToken(this.origin, this.dom.data, this.dom._rootData, this.dom._index);
-    };
-    return LeafToken;
-}());
-var LeafAttribute = /** @class */ (function () {
-    function LeafAttribute(dom, name, tokenOrigin) {
-        this.value = '';
+    }
+}
+class LeafAttribute {
+    dom: Dom;
+    name: string;
+    value: string = '';
+    token: LeafToken;
+
+    constructor(dom: Dom, name: string, tokenOrigin: string) {
         if (!__leaf_startsWith(name, 'l-')) {
             throw new Error('invalid executable attribute:' + name);
         }
         this.dom = dom;
         this.name = name.substring(2);
         this.token = new LeafToken(this.dom, tokenOrigin);
+
         // parse
         if (__leaf_startsWith(this.name, 'style-')) {
             this.value = name.substring(6);
             this.name = 'style';
-        }
-        else if (__leaf_startsWith(this.name, 'class:')) {
+        } else if (__leaf_startsWith(this.name, 'class:')) {
             this.value = this.name.substring(6);
             this.name = 'class';
-        }
-        else if (this.name === 'for') {
+        } else if (this.name === 'for') {
             // TODO
         }
+
         // listen
-        (function (self) {
+        (function (self: LeafAttribute) {
             for (var i = 0; i < self.token.observableRefs.length; i++) {
                 self.token.observableRefs[i].__observers.push(function (v) {
                     self.execute();
-                });
+                })
             }
         })(this);
+
         this.execute();
         return this;
     }
-    LeafAttribute.prototype.execute = function () {
-        var result = this.token.execute();
+    execute() {
+        let result = this.token.execute();
         if (result && result.__observers && result.postValue) {
             result = result.value;
         }
+
         if (this.name === 'class') {
             if (result) {
                 __leaf_addClass(this.dom.elem, this.value);
-            }
-            else {
-                __leaf_removeClass(this.dom.elem, this.value);
+            } else {
+                __leaf_removeClass(this.dom.elem, this.value)
             }
             return;
         }
         if (this.name === 'if') {
             if (result) {
                 this.dom.elem.style.display = '';
-            }
-            else {
+            } else {
                 this.dom.elem.style.display = 'none';
             }
             return;
@@ -180,64 +198,60 @@ var LeafAttribute = /** @class */ (function () {
         if (typeof result === 'boolean') {
             if (result) {
                 this.dom.elem.setAttribute(this.name, this.value);
-            }
-            else {
+            } else {
                 this.dom.elem.removeAttribute(this.name);
             }
             return;
         }
+
         if (this.name === 'value') {
             this.dom.elem['value'] = result;
-        }
-        else {
+        } else {
             this.dom.elem.setAttribute(this.name, result);
         }
     };
-    ;
-    return LeafAttribute;
-}());
-var LeafTextContent = /** @class */ (function () {
-    function LeafTextContent() {
-    }
-    return LeafTextContent;
-}());
-function Leaf(id, data) {
-    var elem = document.getElementById(id);
+}
+
+class LeafTextContent {
+
+}
+
+function Leaf(id: string, data: object): object {
+    const elem = document.getElementById(id);
     if (!elem || !(elem instanceof HTMLElement)) {
         throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elem);
     }
-    var dom = new Dom(elem, data, null);
+    const dom = new Dom(elem, data, null);
     return dom.data;
 }
-function embedHTML(callback, elemOrId) {
+
+function embedHTML(callback: () => void, elemOrId: HTMLElement | string) {
     if (elemOrId) {
-        var elem;
+        var elem: HTMLElement;
         if (typeof elemOrId === 'string') {
             var e = document.getElementById(elemOrId);
             if (e == null) {
                 throw new Error('element with id [' + elemOrId + '] not found');
             }
             elem = e;
-        }
-        else if (!elemOrId || !(elemOrId instanceof HTMLElement)) {
+        } else if (!elemOrId || !(elemOrId instanceof HTMLElement)) {
             throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elemOrId);
-        }
-        else {
+        } else {
             elem = elemOrId;
         }
         var src = elem.getAttribute('src');
         if (!src) {
-            throw new Error('template.src not set:' + elem.outerHTML);
+            throw new Error('template.src not set:' + elem.outerHTML)
         }
         __leaf_embedHTML(elem, src, callback);
         return;
     }
+
     var elems = document.getElementsByTagName('template');
-    if (!elems)
-        return;
+    if (!elems) return;
     var waitGroup = 0;
     for (var i = 0; i < elems.length; i++) {
-        var elem = elems[i];
+        var elem = elems[i] as HTMLElement;
         var src = elem.getAttribute('src');
         if (src) {
             waitGroup++;
@@ -250,25 +264,26 @@ function embedHTML(callback, elemOrId) {
         }
     }
 }
-function __leaf_embedHTML(elem, src, callback) {
+
+function __leaf_embedHTML(elem: HTMLElement, src: string, callback: () => void) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) {
             return;
         }
-        if (callback)
-            callback();
+        if (callback) callback();
         if (xhr.status !== 200) {
             elem.innerText = xhr.status + ': ' + xhr.responseText;
             return;
         }
         elem.outerHTML = xhr.responseText;
-    };
+    }
     xhr.open('GET', src);
     xhr.send();
 }
-var __leaf_randomIDs = {};
-function __leaf_generateID(length) {
+var __leaf_randomIDs: Record<string, boolean> = {};
+
+function __leaf_generateID(length: number): string {
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var charactersLength = characters.length;
@@ -277,14 +292,15 @@ function __leaf_generateID(length) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
         counter += 1;
     }
-    result = '___' + result + '___';
+    result = '___' + result + '___'
     if (__leaf_randomIDs[result]) {
         return __leaf_generateID(length);
     }
     __leaf_randomIDs[result] = true;
     return result;
 }
-function __leaf_isEnglishAlphabet(c) {
+
+function __leaf_isEnglishAlphabet(c: string): boolean {
     var l = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
     for (var i = 0; i < l.length; i++) {
         if (c === l.charAt(i)) {
@@ -293,12 +309,14 @@ function __leaf_isEnglishAlphabet(c) {
     }
     return false;
 }
-function __leaf_createElemByString(s) {
+
+function __leaf_createElemByString(s: string): HTMLElement {
     var div = document.createElement('div');
     div.outerHTML = s;
     return div;
 }
-function __leaf_isVariableName(c) {
+
+function __leaf_isVariableName(c: string): boolean {
     var l = 'abcdefghijklmnopqrstuvwxyz';
     for (var i = 0; i < l.length; i++) {
         if (c === l.charAt(i)) {
@@ -307,17 +325,19 @@ function __leaf_isVariableName(c) {
     }
     return false;
 }
-function __leaf_startsWith(s, sep) {
+
+function __leaf_startsWith(s: string, sep: string): boolean {
     if (s.length < sep.length) {
         return false;
     }
     return s.substring(0, sep.length) === sep;
 }
-function __leaf_removeClass(elem, className) {
+
+function __leaf_removeClass(elem: HTMLElement, className: string) {
     var s = elem.getAttribute('class');
     if (s) {
         var builder = '';
-        var ss = s.split(' ');
+        const ss = s.split(' ');
         for (var i = 0; i < ss.length; i++) {
             if (ss[i] && ss[i] !== className) {
                 builder += ss[i];
@@ -326,13 +346,14 @@ function __leaf_removeClass(elem, className) {
         elem.setAttribute('class', builder);
     }
 }
-function __leaf_addClass(elem, className) {
+
+function __leaf_addClass(elem: HTMLElement, className: string) {
     var s = elem.getAttribute('class');
     if (!s) {
         elem.setAttribute('class', className);
         return;
     }
-    var ss = s.split(' ');
+    const ss = s.split(' ');
     for (var i = 0; i < ss.length; i++) {
         if (ss[i] && ss[i] === className) {
             return;

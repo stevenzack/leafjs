@@ -10,19 +10,16 @@
 </head>
 
 <body>
-<div id="two-way-binding-id2">
-    <template>
-        <h1>haksjhd</h1>
-    </template>
-    <input type="text" l-value="i" onchange="app.i.postValue(this.value)">
-    <span>{{i}}</span>
-</div>
-<script>
-    app = Leaf('two-way-binding-id2', {
-        i: Observable('<one>'),
-    })
-   
-</script>
+    <div id="style-id">
+        <b l-style="'color:'+colors[index]">Hello Leaf.js</b>
+        <button onclick="appStyle.index.postValue(function(i){i++;return i%6;})">Toggle</button>
+    </div>
+    <script>
+        appStyle = Leaf('style-id', {
+            index: Observable(0),
+            colors: ['red', 'green', 'blue', 'orange', 'pink', 'purple']
+        })
+    </script>
 </body>
 
 </html>
