@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <embed src="header.html" type="text/html" height="36" width="100%">
+    <template src="header.html"></template>
 
     <div class="col w" id="app">
         <div class="col maxw3xl w">
@@ -38,6 +38,9 @@
                         </optgroup>
                         <optgroup label="Array Operation">
 
+                        </optgroup>
+                        <optgroup label="Others">
+                            <option value="embed-html">Embed other HTML</option>
                         </optgroup>
                     </select>
                 </p>
@@ -91,6 +94,7 @@
             current: Observable('text'),
         });
         updateCurrent(app.current.value);
+        embedHTML()
     </script>
 </body>
 

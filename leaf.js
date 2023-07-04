@@ -74,6 +74,53 @@ function Observable(data) {
     }
     return out;
 }
+
+function Leaf(elemOrId, $) {
+    if (typeof elemOrId === 'string') {
+        elemOrId = document.getElementById(elemOrId);
+    }
+    if (!elemOrId || !(elemOrId instanceof HTMLElement)) {
+        throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elemOrId);
+    }
+    return __leaf_hydrate(elemOrId, $);
+}
+function embedHTML(elemOrId) {
+    if (elemOrId) {
+        if (typeof elemOrId === 'string') {
+            elemOrId = document.getElementById(elemOrId);
+        }
+        if (!elemOrId || !(elemOrId instanceof HTMLElement)) {
+            throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elemOrId);
+        }
+        __leaf_embedHTML(elemOrId);
+        return;
+    }
+    var elems = document.getElementsByTagName('template');
+    if (!elems) return;
+    for (var i = 0; i < elems.length; i++) {
+        var elem = elems[i];
+        console.log(elem.outerHTML);
+        var src = elem.getAttribute('src');
+        if (src) {
+            __leaf_embedHTML(elem, src);
+        }
+    }
+}
+function __leaf_embedHTML(elem, src) {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) {
+            return;
+        }
+        if (xhr.status !== 200) {
+            elem.innerText = xhr.status + ': ' + xhr.responseText;
+            return;
+        }
+        elem.outerHTML=xhr.responseText;
+    }
+    xhr.open('GET',src);
+    xhr.send();
+}
 var __leaf_randomIDs = {}
 
 function __leaf_generateID(length) {
@@ -93,15 +140,6 @@ function __leaf_generateID(length) {
     return result;
 }
 
-function Leaf(elemOrId, $) {
-    if (typeof elemOrId === 'string') {
-        elemOrId = document.getElementById(elemOrId);
-    }
-    if (!(elemOrId instanceof HTMLElement)) {
-        throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elemOrId);
-    }
-    return __leaf_hydrate(elemOrId, $);
-}
 function __leaf_isEnglishAlphabet(c) {
     var l = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
     for (var i = 0; i < l.length; i++) {

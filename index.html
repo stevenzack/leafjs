@@ -10,8 +10,16 @@
 </head>
 
 <body>
-    <embed src="header.html" type="text/html" height="36" width="100%">
-        
+    <template src="header.html">
+        <div class="row shadow p">
+            <a href="/"><b>Leaf.js</b></a>
+            <span class="g"></span>
+            <a class="mx" href="guide.html">Guide</a>
+            <a class="mx" href="https://github.com/StevenZack/leafjs">Github</a>
+            <a class="mx" href="leaf.js">Download</a>
+        </div>
+    </template>
+
     <div class="col w">
         <div class="col maxw3xl w">
             <h1 class="mx">Leaf.js</h1>
@@ -49,6 +57,9 @@
             <a href="guide.html">-> Go see more examples</a>
         </div>
     </div>
+    <script>
+        embedHTML();
+    </script>
 </body>
 
 </html>
