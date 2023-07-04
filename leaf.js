@@ -84,7 +84,7 @@ function Leaf(elemOrId, $) {
     }
     return __leaf_hydrate(elemOrId, $);
 }
-function embedHTML(elemOrId) {
+function embedHTML(callback, elemOrId) {
     if (elemOrId) {
         if (typeof elemOrId === 'string') {
             elemOrId = document.getElementById(elemOrId);
@@ -92,33 +92,40 @@ function embedHTML(elemOrId) {
         if (!elemOrId || !(elemOrId instanceof HTMLElement)) {
             throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elemOrId);
         }
-        __leaf_embedHTML(elemOrId);
+        __leaf_embedHTML(elemOrId, callback);
         return;
     }
     var elems = document.getElementsByTagName('template');
     if (!elems) return;
+    var waitGroup = 0;
     for (var i = 0; i < elems.length; i++) {
         var elem = elems[i];
-        console.log(elem.outerHTML);
         var src = elem.getAttribute('src');
         if (src) {
-            __leaf_embedHTML(elem, src);
+            waitGroup++;
+            __leaf_embedHTML(elem, src, function () {
+                waitGroup--;
+                if (waitGroup <= 0 && callback) {
+                    callback();
+                }
+            });
         }
     }
 }
-function __leaf_embedHTML(elem, src) {
+function __leaf_embedHTML(elem, src, callback) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) {
             return;
         }
+        if (callback) callback();
         if (xhr.status !== 200) {
             elem.innerText = xhr.status + ': ' + xhr.responseText;
             return;
         }
-        elem.outerHTML=xhr.responseText;
+        elem.outerHTML = xhr.responseText;
     }
-    xhr.open('GET',src);
+    xhr.open('GET', src);
     xhr.send();
 }
 var __leaf_randomIDs = {}
