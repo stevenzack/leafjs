@@ -1,0 +1,43 @@
+<ul id="for3-id">
+    <input type="text" placeholder="title" l-value="title" onkeyup="appFor3.title.postValue(this.value)">
+    <input type="text" placeholder="name" l-value="name" onkeyup="appFor3.name.postValue(this.value)">
+    <button onclick="doAdd()">Add</button>
+    <li l-for="list">
+        <div>
+            {{title}}
+        </div>
+        <button  l-for="items" l-onclick="">{{name}}</button>
+    </li>
+</ul>
+<script>
+    window.doAdd = function () {
+        var title = appFor3.title.value;
+        var name = appFor3.name.value;
+        if (!title || !name) {
+            return;
+        }
+        appFor3.list.append({
+            title: title,
+            items: Observable([
+                {
+                    name: name,
+                }
+            ])
+        })
+    }
+    appFor3 = Leaf('for3-id', {
+        title: Observable(''),
+        name: Observable(''),
+
+        list: Observable([
+            {
+                title: 'One',
+                items: Observable([
+                    {
+                        name: 'Bob'
+                    }
+                ])
+            }
+        ])
+    })
+</script>
