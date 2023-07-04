@@ -394,9 +394,6 @@ function __leaf_hydrate(elem, $, _index) {
         }
 
         template[template.length - 1] += char1;
-        if (i >= s.length - 2) {
-            template[template.length - 1] += char2;
-        }
     }
 
     // listen innerText
