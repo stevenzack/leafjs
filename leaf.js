@@ -28,7 +28,7 @@ function Observable(data) {
     };
     if (data instanceof Array) {
         out.append = function (v) {
-            if (v instanceof Array) {
+            if (this.value instanceof Array) {
                 this.value.push(v);
             }
             else {
@@ -81,52 +81,264 @@ function Observable(data) {
     return out;
 }
 var Dom = /** @class */ (function () {
-    function Dom(elem, data, parentDom) {
-        if (parentDom === void 0) { parentDom = null; }
+    function Dom(parentDom, elem, context) {
         this.children = [];
         this.attributes = [];
-        this._parentDom = parentDom;
+        console.log('new Dom: ' + elem.tagName + ', ');
+        console.log(context);
+        this.parentDom = parentDom;
         this.elem = elem;
-        this.data = data;
-        if (!parentDom) {
-            this._rootData = data;
+        this.context = context;
+        // attributes
+        for (var i = 0; i < this.elem.attributes.length; i++) {
+            var attr = this.elem.attributes[i];
+            if (attr.name === 'l-for') {
+                this.transformIntoLFor(attr.value);
+                return this;
+            }
+            if (__leaf_startsWith(attr.name, 'l-')) {
+                this.attributes.push(new LeafAttribute(this, attr.name, attr.value));
+            }
         }
-        this.parseLeafAttributes();
+        // text content
         if (LeafTextContent.checkIfNeeded(this)) {
             this.textContent = new LeafTextContent(this);
         }
         // children
         for (var i = 0; i < elem.children.length; i++) {
-            this.children.push(new Dom(elem.children[i], data, this));
+            this.children.push(new Dom(this, elem.children[i], this.context));
         }
+        this.execute();
         return this;
     }
-    Dom.prototype.parseLeafAttributes = function () {
-        for (var i = 0; i < this.elem.attributes.length; i++) {
-            var attr = this.elem.attributes[i];
-            if (__leaf_startsWith(attr.name, 'l-')) {
-                this.attributes.push(new LeafAttribute(this, attr.name, attr.value));
+    Dom.prototype.transformIntoLFor = function (tokenOrigin) {
+        this.elem.setAttribute('__leaf_for_item__', tokenOrigin);
+        this.elem.removeAttribute('l-for');
+        this.lForTemplate = this.elem.outerHTML;
+        this.lForTokenOrigin = tokenOrigin;
+        var ss = tokenOrigin.split(' ');
+        var listVariableName = '';
+        var itemName = '';
+        var indexName = '';
+        this.siblings = [this];
+        for (var i = 0; i < ss.length; i++) {
+            var s = ss[i].replace(' ', '');
+            if (!s) {
+                continue;
             }
+            if (!listVariableName) {
+                if (!__leaf_isVariableName(s)) {
+                    continue;
+                }
+                var observable = this.context.data[s];
+                if (!observable) {
+                    throw new Error('value in token {{' + tokenOrigin + '}} not found');
+                }
+                if (observable.postValue && observable.__observers) {
+                    var value = observable.value;
+                    if (!value || !(value instanceof Array)) {
+                        throw new Error('value type in token {{' + tokenOrigin + '}} is not an Array or Observable<Array>');
+                    }
+                    listVariableName = s;
+                    continue;
+                }
+                if (observable instanceof Array) {
+                    listVariableName = s;
+                    continue;
+                }
+                throw new Error('value type in token {{' + tokenOrigin + '}} is not an Array or Observable<Array>');
+            }
+            if (s === 'as') {
+                continue;
+            }
+            if (!itemName) {
+                if (s.indexOf(',') > -1) {
+                    var vs = s.split(',');
+                    if (vs.length != 2) {
+                        throw new Error('invalid token for l-for {{' + tokenOrigin + '}}');
+                    }
+                    itemName = vs[0];
+                    if (!__leaf_isVariableName(itemName)) {
+                        throw new Error('invalid token for l-for {{' + tokenOrigin + '}}');
+                    }
+                    if (this.context.data[itemName]) {
+                        throw new Error('invalid token for l-for {{' + tokenOrigin + '}}, duplicated name :' + itemName);
+                    }
+                    // index name
+                    indexName = vs[1];
+                    if (!__leaf_isVariableName(indexName)) {
+                        throw new Error('invalid token for l-for {{' + tokenOrigin + '}}');
+                    }
+                    if (this.context.data[itemName]) {
+                        throw new Error('invalid token for l-for {{' + tokenOrigin + '}}, duplicated name :' + indexName);
+                    }
+                    break;
+                }
+                itemName = s;
+                if (!__leaf_isVariableName(itemName)) {
+                    throw new Error('invalid token for l-for {{' + tokenOrigin + '}}');
+                }
+                if (this.context.data[itemName]) {
+                    throw new Error('invalid token for l-for {{' + tokenOrigin + '}}, duplicated name :' + itemName);
+                }
+                break;
+            }
+            break;
+        }
+        // switch context when scope changed
+        this.context = new __LeafContext(this.context.data, this.context.extraData, !itemName);
+        // shift to list-item mode
+        this.listKey = listVariableName;
+        this.listData = this.context.data[this.listKey];
+        this.asItemKey = itemName;
+        this.asIndexKey = indexName;
+        if (!this.asIndexKey) {
+            this.asIndexKey = '_index';
+        }
+        // text content
+        if (LeafTextContent.checkIfNeeded(this)) {
+            this.textContent = new LeafTextContent(this);
+        }
+        // listen
+        if (this.listData.__observers && this.listData.postValue) {
+            (function (obs, self) {
+                obs.__observers.push(function (v) {
+                    self.executeArray();
+                });
+            })(this.listData, this);
+        }
+        this.executeArray();
+        // children
+        for (var i = 0; i < this.elem.children.length; i++) {
+            this.children.push(new Dom(this, this.elem.children[i], this.context));
         }
     };
     Dom.prototype.execute = function () {
+        // normal elem
         for (var i = 0; i < this.attributes.length; i++) {
             this.attributes[i].execute();
         }
         if (this.textContent) {
             this.textContent.execute();
         }
+        // children
+        for (var i = 0; i < this.children.length; i++) {
+            this.children[i].execute();
+        }
+    };
+    Dom.prototype.executeArray = function () {
+        var dataList = this.listData;
+        if (!dataList) {
+            console.error(this.context);
+            throw new Error('l-for: array value not found in data. {{' + this.listKey + '}}');
+        }
+        if (dataList.__observers && dataList.postValue) {
+            dataList = dataList.value;
+        }
+        if (!dataList || !(dataList instanceof Array)) {
+            console.error(dataList);
+            throw new Error('l-for: value {{' + this.listKey + '}} is not Array type');
+        }
+        if (!this.parentDom) {
+            throw new Error('parent Dom not found');
+        }
+        // compare
+        var toRemove = [];
+        var toAppend = [];
+        for (var i = 0; i < this.siblings.length || i < dataList.length; i++) {
+            if (i >= dataList.length) {
+                //delete
+                if (i === 0) {
+                    this.elem.style.display = 'none';
+                }
+                else {
+                    toRemove.push(this.siblings[i]);
+                }
+                continue;
+            }
+            if (i < this.siblings.length) {
+                //update
+                if (i === 0) {
+                    this.siblings[i].elem.style.display = '';
+                }
+                this.siblings[i].context.data = dataList[i];
+                this.siblings[i].context.extraData[this.asIndexKey] = i;
+                console.log('asItemKey = ' + this.asItemKey);
+                if (!this.context.unwrapData) {
+                    if (!this.asItemKey) {
+                        throw new Error('this.asItemKey is empty');
+                    }
+                    this.siblings[i].context.extraData[this.asItemKey] = dataList[i];
+                }
+                // this.siblings[i].execute();
+                continue;
+            }
+            // create
+            var token = new __LeafContext(dataList[i], this.context.extraData, this.context.unwrapData);
+            token.extraData[this.asIndexKey] = i;
+            if (!this.context.unwrapData) {
+                if (!this.asItemKey) {
+                    throw new Error('this.asItemKey is empty');
+                }
+                token.extraData[this.asItemKey] = dataList[i];
+            }
+            var newDom = new Dom(null, __leaf_createElemByString(this.lForTemplate), token);
+            toAppend.push(newDom);
+        }
+        for (var i = 0; i < toRemove.length; i++) {
+            __leaf_removeInArray(this.siblings, toRemove[i]);
+            this.parentDom.elem.removeChild(toRemove[i].elem);
+        }
+        var suffixIndex = -1;
+        for (var i = 0; i < this.parentDom.elem.children.length; i++) {
+            if (this.parentDom.elem.children[i].getAttribute('__leaf_for_item__') === this.lForTokenOrigin) {
+                suffixIndex = i;
+                continue;
+            }
+            if (suffixIndex > -1) {
+                break;
+            }
+        }
+        if (suffixIndex === -1) {
+            throw new Error("suffix index of domList is not found: this means leaf.js unexpectedly delete the hidden first element of l-for, now we couldn't find it any more");
+        }
+        var next = null;
+        if (suffixIndex < this.parentDom.elem.children.length - 1) {
+            next = this.parentDom.elem.children[suffixIndex + 1];
+        }
+        for (var i = 0; i < toAppend.length; i++) {
+            if (next) {
+                this.parentDom.elem.insertBefore(toAppend[i].elem, next);
+            }
+            else {
+                this.parentDom.elem.appendChild(toAppend[i].elem);
+            }
+            this.siblings.push(toAppend[i]);
+        }
     };
     return Dom;
 }());
-function __leaf_executeToken(__leaf_token_origin, $, _root, _index) {
-    console.log(__leaf_token_origin);
-    console.log($);
-    eval(__leaf_unwrapVariablesOfany($, '$'));
+function __leaf_removeInArray(array, item) {
+    if (!(array instanceof Array)) {
+        throw new Error('array type is not Array');
+    }
+    for (var i = 0; i < array.length; i++) {
+        if (item === array[i]) {
+            array.splice(i, 1);
+            return;
+        }
+    }
+}
+function __leaf_executeToken(__leaf_token_origin, $, __leaf_extraData, unwrapData) {
+    eval(unwrapData ? __leaf_unwrapVariablesOfany($, '$') : '');
+    eval(__leaf_unwrapVariablesOfany(__leaf_extraData, '__leaf_extraData'));
     var result = eval(__leaf_token_origin);
     return result;
 }
 function __leaf_unwrapVariablesOfany(obj, objName) {
+    if (!obj) {
+        return '';
+    }
     if (typeof obj !== 'object') {
         return '';
     }
@@ -147,9 +359,10 @@ var LeafToken = /** @class */ (function () {
         this.dom = elem;
         this.origin = tokenOrigin;
         var variableStarted = -1;
+        // collect observables
         for (var i = 0; i < tokenOrigin.length; i++) {
             var char = tokenOrigin[i];
-            if (__leaf_isVariableName(char)) {
+            if (__leaf_isEnglishAlphabet(char)) {
                 if (variableStarted === -1) {
                     variableStarted = i;
                     continue;
@@ -161,7 +374,7 @@ var LeafToken = /** @class */ (function () {
             }
             // variable ending
             var variableName = tokenOrigin.substring(variableStarted, i);
-            var observable = this.dom.data[variableName];
+            var observable = this.dom.context.data[variableName];
             if (observable && observable.postValue && observable.__observers) {
                 if (variableStarted > 0 && tokenOrigin[variableStarted - 1] === '.') {
                     variableStarted = -1;
@@ -174,7 +387,7 @@ var LeafToken = /** @class */ (function () {
         if (variableStarted !== -1) {
             // variable until the end
             var variableName = tokenOrigin.substring(variableStarted, tokenOrigin.length);
-            var observable = this.dom.data[variableName];
+            var observable = this.dom.context.data[variableName];
             if (observable && observable.postValue && observable.__observers) {
                 if (variableStarted > 0 && tokenOrigin[variableStarted - 1] === '.') {
                 }
@@ -186,7 +399,9 @@ var LeafToken = /** @class */ (function () {
         return this;
     }
     LeafToken.prototype.execute = function () {
-        return __leaf_executeToken(this.origin, this.dom.data, this.dom._rootData, this.dom._index);
+        console.error('executing:' + this.origin);
+        console.log(this);
+        return __leaf_executeToken(this.origin, this.dom.context.data, this.dom.context.extraData, this.dom.context.unwrapData);
     };
     return LeafToken;
 }());
@@ -209,7 +424,7 @@ var LeafAttribute = /** @class */ (function () {
             this.name = 'class';
         }
         else if (this.name === 'for') {
-            // TODO
+            return this;
         }
         // listen
         (function (self) {
@@ -219,7 +434,6 @@ var LeafAttribute = /** @class */ (function () {
                 });
             }
         })(this);
-        this.execute();
         return this;
     }
     LeafAttribute.prototype.execute = function () {
@@ -255,7 +469,7 @@ var LeafAttribute = /** @class */ (function () {
             return;
         }
         if (this.name === 'value') {
-            this.dom.elem.value = result;
+            this.dom.elem['value'] = result;
         }
         else {
             this.dom.elem.setAttribute(this.name, result);
@@ -324,7 +538,6 @@ var LeafTextContent = /** @class */ (function () {
                 }
             }
         }
-        this.execute();
     }
     LeafTextContent.prototype.execute = function () {
         var s = this.template;
@@ -332,7 +545,7 @@ var LeafTextContent = /** @class */ (function () {
             var result = this.tokens[i].execute();
             s = s.replace(this.tokens[i].uniqueID, result);
         }
-        this.dom.elem.innerText = s;
+        this.dom.elem.innerHTML = __leaf_sanitizeHTML(s);
     };
     LeafTextContent.checkIfNeeded = function (dom) {
         // check
@@ -358,8 +571,10 @@ function Leaf(id, data) {
     if (!elem || !(elem instanceof HTMLElement)) {
         throw new Error('Leaf() first argument type is not HTMLElement or string(id of the element): ' + elem);
     }
-    var dom = new Dom(elem, data, null);
-    return dom.data;
+    var dom = new Dom(null, elem, new __LeafContext(data, {
+        _root: data
+    }, true));
+    return data;
 }
 function embedHTML(callback, elemOrId) {
     if (elemOrId) {
@@ -447,17 +662,19 @@ function __leaf_isEnglishAlphabet(c) {
 }
 function __leaf_createElemByString(s) {
     var div = document.createElement('div');
-    div.outerHTML = s;
-    return div;
+    div.innerHTML = s;
+    return div.firstChild;
 }
-function __leaf_isVariableName(c) {
-    var l = 'abcdefghijklmnopqrstuvwxyz';
-    for (var i = 0; i < l.length; i++) {
-        if (c === l.charAt(i)) {
-            return true;
+function __leaf_isVariableName(str) {
+    if (!str) {
+        return false;
+    }
+    for (var i = 0; i < str.length; i++) {
+        if (!__leaf_isEnglishAlphabet(str.charAt(i))) {
+            return false;
         }
     }
-    return false;
+    return true;
 }
 function __leaf_startsWith(s, sep) {
     if (s.length < sep.length) {
@@ -511,3 +728,11 @@ function __leaf_desanitizeHTML(s) {
     s = s.replace('&gt;', '>');
     return s;
 }
+var __LeafContext = /** @class */ (function () {
+    function __LeafContext(data, extraData, unwrapData) {
+        this.data = data;
+        this.extraData = extraData;
+        this.unwrapData = unwrapData;
+    }
+    return __LeafContext;
+}());

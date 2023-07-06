@@ -10,14 +10,22 @@
 </head>
 
 <body>
-
-    <div id="if-id">
-        <span l-if="show">Show</span>
-        <button onclick="appIf.show.postValue(!appIf.show.value)">Toggle</button>
+    <div id="for-id">
+        <ol>
+            <li l-for="list as v,i">
+                <span>{{v}}</span>
+                <button l-onclick="'appFor.list.removeAt('+i+')'">delete</button>
+            </li>
+        </ol>
+        <button onclick="appFor.list.update(function(l){l.push('item '+l.length)})">Add</button>
     </div>
     <script>
-        appIf = Leaf('if-id', {
-            show: Observable(true),
+        appFor = Leaf('for-id', {
+            list: Observable([
+                'first',
+                'second',
+                'third'
+            ]),
         })
     </script>
 </body>
