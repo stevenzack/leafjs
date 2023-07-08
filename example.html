@@ -10,22 +10,72 @@
 </head>
 
 <body>
-    <div id="for-id">
-        <ol>
-            <li l-for="list as v,i">
-                <span>{{v}}</span>
-                <button l-onclick="'appFor.list.removeAt('+i+')'">delete</button>
-            </li>
-        </ol>
-        <button onclick="appFor.list.update(function(l){l.push('item '+l.length)})">Add</button>
-    </div>
+    <ul id="for3-id">
+        <input type="text" placeholder="title" l-value="title" onkeyup="appFor3.title.postValue(this.value)">
+        <input type="text" placeholder="name" l-value="name" onkeyup="appFor3.name.postValue(this.value)">
+        <button onclick="doAdd()">Add</button>
+        <li l-for="list as v,i">
+            <span>
+                {{v.title}}
+            </span>
+            <a href="#" l-onclick="'appFor3.list.removeAt('+i+')'">delete</a>
+    
+        </li>
+    </ul>
     <script>
-        appFor = Leaf('for-id', {
+        window.doAppendItem = function (i, j) {
+            var origin = appFor3.list.value[i].items.value[j].name;
+            appFor3.list.value[i].items.value[j].name = origin === 'asd' ? 'Changed' : 'asd';
+            var len = appFor3.list.value[i].items.value.length;
+            appFor3.list.value[i].items.append({
+                name: 'subitem ' + len,
+            });
+        }
+        window.doAdd = function () {
+            var title = appFor3.title.value;
+            var name = appFor3.name.value;
+            if (!title || !name) {
+                return;
+            }
+            appFor3.list.append({
+                title: title,
+                items: Observable([
+                    {
+                        name: name,
+                    }
+                ])
+            })
+        }
+        appFor3 = Leaf('for3-id', {
+            title: Observable(''),
+            name: Observable(''),
+
             list: Observable([
-                'first',
-                'second',
-                'third'
-            ]),
+                {
+                    title: 'One',
+                    items: Observable([
+                        {
+                            name: 'Bob'
+                        }
+                    ])
+                },
+                {
+                    title: 'Two',
+                    items: Observable([
+                        {
+                            name: 'asd'
+                        }
+                    ])
+                },
+                {
+                    title: 'Three',
+                    items: Observable([
+                        {
+                            name: 'ppp'
+                        }
+                    ])
+                },
+            ])
         })
     </script>
 </body>

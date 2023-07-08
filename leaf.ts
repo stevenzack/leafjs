@@ -89,10 +89,10 @@ class Dom {
     children: Dom[] = [];
     elem: HTMLElement;
 
-    private listData: any; // Observable<Array> | Array;
     context: __LeafContext;
     private attributes: LeafAttribute[] = [];
     private textContent: LeafTextContent;
+    unbindObservables: (() => void)[] = [];
 
     // l-for
     private lForTemplate: string;
@@ -103,9 +103,6 @@ class Dom {
     private siblings: Dom[];
 
     constructor(parentDom: Dom | null, elem: HTMLElement, context: __LeafContext) {
-        console.log('new Dom: ' + elem.tagName + ', ');
-        console.log(context);
-
         this.parentDom = parentDom;
         this.elem = elem;
         this.context = context;
@@ -132,11 +129,12 @@ class Dom {
             this.children.push(new Dom(this, elem.children[i] as HTMLElement, this.context))
         }
 
-        this.execute();
         return this;
     }
 
     private transformIntoLFor(tokenOrigin: string) {
+        console.log('transformIntoLFor: ' + tokenOrigin);
+
         this.elem.setAttribute('__leaf_for_item__', tokenOrigin);
         this.elem.removeAttribute('l-for');
         this.lForTemplate = this.elem.outerHTML;
@@ -215,17 +213,15 @@ class Dom {
             }
             break;
         }
-        // switch context when scope changed
-        this.context = new __LeafContext(this.context.data, this.context.extraData, !itemName);
-
         // shift to list-item mode
         this.listKey = listVariableName;
-        this.listData = this.context.data[this.listKey];
         this.asItemKey = itemName;
         this.asIndexKey = indexName;
         if (!this.asIndexKey) {
             this.asIndexKey = '_index';
         }
+        // switch context when scope changed
+        this.context = new __LeafContext(this.context.data, this.context.extraData, !itemName);
 
         // text content
         if (LeafTextContent.checkIfNeeded(this)) {
@@ -233,22 +229,67 @@ class Dom {
         }
 
         // listen
-        if (this.listData.__observers && this.listData.postValue) {
+        let listData = this.getListData();
+        if (listData.__observers && listData.postValue) {
             (function (obs: LeafObservable, self: Dom) {
-                obs.__observers.push(function (v) {
+                let listener = function () {
                     self.executeArray();
+                };
+                obs.__observers.push(listener)
+                self.unbindObservables.push(function () {
+                    __leaf_removeInArray(obs.__observers, listener);
                 })
-            })(this.listData as LeafObservable, this);
+            })(listData as LeafObservable, this);
         }
 
-        this.executeArray();
+        // attributes
+        for (var i = 0; i < this.elem.attributes.length; i++) {
+            var attr = this.elem.attributes[i];
+            if (attr.name === 'l-for') {
+                continue;
+            }
+            if (__leaf_startsWith(attr.name, 'l-')) {
+                this.attributes.push(new LeafAttribute(this, attr.name, attr.value));
+            }
+        }
+
+        // text content
+        if (LeafTextContent.checkIfNeeded(this)) {
+            this.textContent = new LeafTextContent(this);
+        }
+
         // children
         for (var i = 0; i < this.elem.children.length; i++) {
             this.children.push(new Dom(this, this.elem.children[i] as HTMLElement, this.context))
         }
     }
 
-    execute() {
+    private rebind() {
+        for (var i = 0; i < this.unbindObservables.length; i++) {
+            this.unbindObservables[i]();
+        }
+        this.unbindObservables = [];
+
+        for (var i = 0; i < this.attributes.length; i++) {
+            this.attributes[i].rebind();
+        }
+        if (this.textContent) {
+            this.textContent.rebind();
+        }
+        for (var i = 0; i < this.children.length; i++) {
+            this.children[i].rebind();
+        }
+    }
+
+    execute(ignoreArray: boolean) {
+        console.log('==== Dom.execute: ' + this.elem.tagName + ' : ' + ignoreArray);
+        console.log(this.context);
+
+
+        if (!ignoreArray && this.listKey) {
+            this.executeArray();
+            return;
+        }
         // normal elem
         for (var i = 0; i < this.attributes.length; i++) {
             this.attributes[i].execute();
@@ -259,12 +300,23 @@ class Dom {
 
         // children
         for (var i = 0; i < this.children.length; i++) {
-            this.children[i].execute();
+            this.children[i].execute(false);
         }
     }
 
+    private getListData(): any {
+        if (!this.listKey) {
+            throw new Error('listKey is empty, means this dom is not a l-for dom');
+        }
+        if (!this.parentDom) {
+            throw new Error('l-for element has no parent dom, which is not allowed')
+        }
+
+        return this.parentDom.context.data[this.listKey];
+    }
     private executeArray() {
-        var dataList = this.listData;
+        console.log('executeArray: ');
+        var dataList = this.getListData();
         if (!dataList) {
             console.error(this.context);
             throw new Error('l-for: array value not found in data. {{' + this.listKey + '}}');
@@ -296,36 +348,43 @@ class Dom {
             }
 
             if (i < this.siblings.length) {
+                let sibiling = this.siblings[i];
                 //update
-                if (i === 0) {
-                    this.siblings[i].elem.style.display = '';
-                }
-                this.siblings[i].context.data = dataList[i];
-                this.siblings[i].context.extraData[this.asIndexKey] = i;
-                console.log('asItemKey = ' + this.asItemKey);
+                sibiling.context.data = dataList[i];
+                sibiling.context.extraData[this.asIndexKey] = i;
+                console.log('i == ' + i);
+
+                console.log(sibiling.context.extraData);
+
 
                 if (!this.context.unwrapData) {
                     if (!this.asItemKey) {
                         throw new Error('this.asItemKey is empty');
                     }
-                    this.siblings[i].context.extraData[this.asItemKey] = dataList[i];
+                    sibiling.context.extraData[this.asItemKey] = dataList[i];
                 }
-                // this.siblings[i].execute();
+
+                if (i === 0) {
+                    sibiling.elem.style.display = '';
+                }
+                this.siblings[i].execute(true);
                 continue;
             }
             // create
-            var token = new __LeafContext(dataList[i], this.context.extraData, this.context.unwrapData,);
-            token.extraData[this.asIndexKey] = i;
+            var data = dataList[i];
+            var ctx = new __LeafContext(data, __leaf_copyeObject(this.context.extraData), this.context.unwrapData);
+            ctx.extraData[this.asIndexKey] = i;
             if (!this.context.unwrapData) {
                 if (!this.asItemKey) {
                     throw new Error('this.asItemKey is empty');
                 }
-                token.extraData[this.asItemKey] = dataList[i];
+                ctx.extraData[this.asItemKey] = ctx.data;
             }
-
-            var newDom = new Dom(null, __leaf_createElemByString(this.lForTemplate), token);
+            var newDom = new Dom(null, __leaf_createElemByString(this.lForTemplate), ctx);
             toAppend.push(newDom);
+            newDom.execute(true);
         }
+        console.log('loop end');
 
         for (var i = 0; i < toRemove.length; i++) {
             __leaf_removeInArray(this.siblings, toRemove[i]);
@@ -407,11 +466,15 @@ class LeafToken {
     constructor(elem: Dom, tokenOrigin: string) {
         this.dom = elem;
         this.origin = tokenOrigin;
+        this.recollectObservables();
+        return this;
+    }
+    recollectObservables() {
+        this.observableRefs = [];
         var variableStarted = -1;
-
         // collect observables
-        for (var i = 0; i < tokenOrigin.length; i++) {
-            var char = tokenOrigin[i];
+        for (var i = 0; i < this.origin.length; i++) {
+            var char = this.origin[i];
             if (__leaf_isEnglishAlphabet(char)) {
                 if (variableStarted === -1) {
                     variableStarted = i;
@@ -423,10 +486,10 @@ class LeafToken {
                 continue;
             }
             // variable ending
-            var variableName = tokenOrigin.substring(variableStarted, i);
+            var variableName = this.origin.substring(variableStarted, i);
             var observable = this.dom.context.data[variableName];
             if (observable && observable.postValue && observable.__observers) {
-                if (variableStarted > 0 && tokenOrigin[variableStarted - 1] === '.') {
+                if (variableStarted > 0 && this.origin[variableStarted - 1] === '.') {
                     variableStarted = -1;
                     continue;
                 }
@@ -436,23 +499,19 @@ class LeafToken {
         }
         if (variableStarted !== -1) {
             // variable until the end
-            var variableName = tokenOrigin.substring(variableStarted, tokenOrigin.length);
+            var variableName = this.origin.substring(variableStarted, this.origin.length);
             var observable = this.dom.context.data[variableName];
             if (observable && observable.postValue && observable.__observers) {
-                if (variableStarted > 0 && tokenOrigin[variableStarted - 1] === '.') {
+                if (variableStarted > 0 && this.origin[variableStarted - 1] === '.') {
                 } else {
                     this.observableRefs.push(observable);
                 }
             }
         }
-        return this;
     }
-
     execute(): any {
-        console.error('executing:' + this.origin);
-        console.log(this);
-    
-        return __leaf_executeToken(this.origin, this.dom.context.data, this.dom.context.extraData, this.dom.context.unwrapData);
+        var result = __leaf_executeToken(this.origin, this.dom.context.data, this.dom.context.extraData, this.dom.context.unwrapData);
+        return result;
     }
 }
 
@@ -460,6 +519,7 @@ class LeafAttribute {
     dom: Dom;
     name: string;
     value: string = '';
+    tokenOrigin: string;
     token: LeafToken;
 
     constructor(dom: Dom, name: string, tokenOrigin: string) {
@@ -468,7 +528,8 @@ class LeafAttribute {
         }
         this.dom = dom;
         this.name = name.substring(2);
-        this.token = new LeafToken(this.dom, tokenOrigin);
+        this.tokenOrigin = tokenOrigin;
+        this.token = new LeafToken(this.dom, this.tokenOrigin);
 
         // parse
         if (__leaf_startsWith(this.name, 'style-')) {
@@ -482,15 +543,46 @@ class LeafAttribute {
         }
 
         // listen
-        (function (self: LeafAttribute) {
-            for (var i = 0; i < self.token.observableRefs.length; i++) {
-                self.token.observableRefs[i].__observers.push(function (v) {
+        for (var i = 0; i < this.token.observableRefs.length; i++) {
+            (function (self: LeafAttribute, obs: LeafObservable) {
+                let listener = function (v) {
                     self.execute();
+                };
+                obs.__observers.push(listener)
+                self.dom.unbindObservables.push(function () {
+                    __leaf_removeInArray(obs.__observers, listener);
                 })
-            }
-        })(this);
+            })(this, this.token.observableRefs[i]);
+        }
 
         return this;
+    }
+    rebind() {
+        this.token.recollectObservables()
+        // parse
+        if (__leaf_startsWith(this.name, 'style-')) {
+            this.value = this.name.substring(6);
+            this.name = 'style';
+        } else if (__leaf_startsWith(this.name, 'class:')) {
+            this.value = this.name.substring(6);
+            this.name = 'class';
+        } else if (this.name === 'for') {
+            return this;
+        }
+
+        // listen
+        for (var i = 0; i < this.token.observableRefs.length; i++) {
+            (function (self: LeafAttribute, obs: LeafObservable) {
+                let listener = function (v) {
+                    self.execute();
+                };
+                obs.__observers.push(listener)
+                self.dom.unbindObservables.push(function () {
+                    __leaf_removeInArray(obs.__observers, listener);
+                })
+            })(this, this.token.observableRefs[i]);
+        }
+
     }
     execute() {
         let result = this.token.execute();
@@ -579,10 +671,15 @@ class LeafTextContent {
                         observableCollection.push(obs);
 
                         // listen
-                        const self = this;
-                        obs.__observers.push(function (v) {
-                            self.execute();
-                        });
+                        (function (self: LeafTextContent, obs: LeafObservable) {
+                            let listener = function (v) {
+                                self.execute();
+                            };
+                            obs.__observers.push(listener);
+                            self.dom.unbindObservables.push(function () {
+                                __leaf_removeInArray(obs.__observers, listener);
+                            })
+                        })(this, obs)
                     }
                     this.tokens.push(t);
 
@@ -599,6 +696,24 @@ class LeafTextContent {
             }
         }
 
+    }
+
+    rebind() {
+        for (var i = 0; i < this.tokens.length; i++) {
+            this.tokens[i].recollectObservables();
+            for (var j = 0; j < this.tokens[i].observableRefs.length; j++) {
+                var obs = this.tokens[i].observableRefs[j];
+                (function (self: LeafTextContent, obs: LeafObservable) {
+                    let listener = function (v) {
+                        self.execute();
+                    };
+                    obs.__observers.push(listener);
+                    self.dom.unbindObservables.push(function () {
+                        __leaf_removeInArray(obs.__observers, listener);
+                    })
+                })(this, obs)
+            }
+        }
     }
 
     execute() {
@@ -625,7 +740,7 @@ class LeafTextContent {
             }
             return false;
         }
-        return true;
+        return dom.elem.textContent.indexOf('{{') > -1;
     }
 }
 
@@ -641,6 +756,7 @@ function Leaf(id: string, data: object): object {
         },
         true,
     ));
+    dom.execute(false);
     return data;
 }
 
@@ -781,6 +897,18 @@ function __leaf_addClass(elem: HTMLElement, className: string) {
         }
     }
     elem.setAttribute('class', s + ' ' + className);
+}
+function __leaf_copyeObject(obj: object) {
+    var c = {};
+    for (var key in obj) {
+        var value = obj[key];
+        if (typeof value === 'object') {
+            c[key] = __leaf_copyeObject(value);
+            continue;
+        }
+        c[key] = value;
+    }
+    return c;
 }
 function __leaf_sanitizeHTML(s) {
     s = s + '';
