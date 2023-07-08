@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "ignoreDeprecations": "5.0",
+        "target": "ES3",
+        "sourceMap": true
+    },
+    "files": [
+        "leaf.ts"
+    ]
+}

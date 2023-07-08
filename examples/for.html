@@ -1,12 +1,12 @@
 <div id="for-id">
     <ol>
-        <li l-for="list">{{$}}</li>
+        <li l-for="list as v,i">{{i}} => {{v}}</li>
     </ol>
-    <button onclick="appIf.list.update(function(l){l.push('item '+l.length)})">Add</button>
+    <button onclick="appFor.list.update(function(l){l.push('item '+l.length)})">Add</button>
 </div>
 <script>
-    appIf=Leaf('for-id',{
-        list:Observable([
+    appFor = Leaf('for-id', {
+        list: Observable([
             'first'
         ]),
     })

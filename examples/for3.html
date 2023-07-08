@@ -2,14 +2,25 @@
     <input type="text" placeholder="title" l-value="title" onkeyup="appFor3.title.postValue(this.value)">
     <input type="text" placeholder="name" l-value="name" onkeyup="appFor3.name.postValue(this.value)">
     <button onclick="doAdd()">Add</button>
-    <li l-for="list">
+    <li l-for="list as v,i">
+        <span>
+            {{v.title}}
+        </span>
+        <a href="#" l-onclick="'doRemoveItem('+i+')'">delete</a>
         <div>
-            {{title}}
+            <button l-for="items as v2,j" l-onclick="'doAddItem('+i+','+j+')'">{{v2.name}}</button>
         </div>
-        <button  l-for="items" l-onclick="">{{name}}</button>
     </li>
 </ul>
 <script>
+    window.doRemoveItem = function (i) {
+        appFor3.list.removeAt(i)
+    }
+    window.doAddItem = function (i, j) {
+        appFor3.list.value[i].items.append({
+            name: 'Item ' + j,
+        })
+    }
     window.doAdd = function () {
         var title = appFor3.title.value;
         var name = appFor3.name.value;
@@ -37,7 +48,23 @@
                         name: 'Bob'
                     }
                 ])
-            }
+            },
+            {
+                title: 'Two',
+                items: Observable([
+                    {
+                        name: 'asd'
+                    }
+                ])
+            },
+            {
+                title: 'Three',
+                items: Observable([
+                    {
+                        name: 'ppp'
+                    }
+                ])
+            },
         ])
     })
 </script>
