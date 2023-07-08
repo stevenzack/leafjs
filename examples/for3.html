@@ -3,15 +3,19 @@
     <input type="text" placeholder="name" l-value="name" onkeyup="appFor3.name.postValue(this.value)">
     <button onclick="doAdd()">Add</button>
     <li l-for="list as v,i">
-        <div>
+        <span>
             {{v.title}}
-        </div>
-        <div l-for="items as v2,j">
-            <button l-onclick="">{{v2.name}}</button>
+        </span>
+        <a href="#" l-onclick="'doRemoveItem('+i+')'">delete</a>
+        <div>
+            <button l-for="items as v2,j" l-onclick="'doAddItem('+i+','+j+')'">{{v2.name}}</button>
         </div>
     </li>
 </ul>
 <script>
+    window.doRemoveItem = function (i) {
+        appFor3.list.removeAt(i)
+    }
     window.doAddItem = function (i, j) {
         appFor3.list.value[i].items.append({
             name: 'Item ' + j,

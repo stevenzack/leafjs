@@ -133,8 +133,6 @@ class Dom {
     }
 
     private transformIntoLFor(tokenOrigin: string) {
-        console.log('transformIntoLFor: ' + tokenOrigin);
-
         this.elem.setAttribute('__leaf_for_item__', tokenOrigin);
         this.elem.removeAttribute('l-for');
         this.lForTemplate = this.elem.outerHTML;
@@ -250,6 +248,20 @@ class Dom {
         }
         this.unbindObservables = [];
 
+        if (this.listKey) {
+            let listData = this.getListData();
+            if (listData.__observers && listData.postValue) {
+                (function (obs: LeafObservable, self: Dom) {
+                    let listener = function () {
+                        self.executeArray();
+                    };
+                    obs.__observers.push(listener)
+                    self.unbindObservables.push(function () {
+                        __leaf_removeInArray(obs.__observers, listener);
+                    })
+                })(listData as LeafObservable, this);
+            }
+        }
         for (var i = 0; i < this.attributes.length; i++) {
             this.attributes[i].rebind();
         }
@@ -262,10 +274,6 @@ class Dom {
     }
 
     execute(ignoreArray: boolean) {
-        console.log('==== Dom.execute: ' + this.elem.tagName + ' : ' + ignoreArray);
-        console.log(this.context);
-
-
         if (!ignoreArray && this.listKey) {
             this.executeArray();
             return;
@@ -296,7 +304,6 @@ class Dom {
     }
 
     private executeArray() {
-        console.log('executeArray: ');
         var dataList = this.getListData();
         if (!dataList) {
             console.error(this.context);
@@ -329,10 +336,6 @@ class Dom {
                 //update
                 sibiling.context.data = dataList[i];
                 sibiling.context.extraData[this.asIndexKey] = i;
-
-                console.log(sibiling.context.extraData);
-
-
                 if (!this.context.unwrapData) {
                     if (!this.asItemKey) {
                         throw new Error('this.asItemKey is empty');
@@ -341,6 +344,7 @@ class Dom {
                 }
 
                 sibiling.execute(true);
+                sibiling.rebind();
                 continue;
             }
             // create
@@ -357,7 +361,6 @@ class Dom {
             toAppend.push(newDom);
             newDom.execute(true);
         }
-        console.log('loop end');
 
         // remove
         for (var i = 0; i < toRemove.length; i++) {
@@ -394,22 +397,26 @@ class Dom {
     }
 }
 
-function __leaf_removeInArray(array: any, item: any) {
+function __leaf_removeInArray(array: any, item: any): boolean {
     if (!(array instanceof Array)) {
         throw new Error('array type is not Array');
     }
     for (var i = 0; i < array.length; i++) {
         if (item === array[i]) {
             array.splice(i, 1);
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 function __leaf_executeToken(__leaf_token_origin: string, $: any, __leaf_extraData: any, unwrapData: boolean): any {
     eval(unwrapData ? __leaf_unwrapVariablesOfany($, '$') : '');
     eval(__leaf_unwrapVariablesOfany(__leaf_extraData, '__leaf_extraData'));
     var result = eval(__leaf_token_origin);
+    if (result && result.postValue && result.__observers) {
+        return result.value;
+    }
     return result
 }
 
@@ -441,16 +448,40 @@ class LeafToken {
     constructor(elem: Dom, tokenOrigin: string) {
         this.dom = elem;
         this.origin = tokenOrigin;
-        this.recollectObservables();
+        this.collectObservables();
         return this;
     }
-    recollectObservables() {
+
+    collectObservables() {
         this.observableRefs = [];
         var variableStarted = -1;
+        var singleQuoteStarted = -1;
+        var doubleQuoteStarted = -1;
         // collect observables
         for (var i = 0; i < this.origin.length; i++) {
             var char = this.origin[i];
-            if (__leaf_isEnglishAlphabet(char)) {
+
+            if (char === '"') {
+                if (doubleQuoteStarted === -1) {
+                    doubleQuoteStarted = i;
+                } else {
+                    doubleQuoteStarted = -1;
+                }
+                continue;
+            }
+            if (char === "'") {
+                if (singleQuoteStarted === -1) {
+                    singleQuoteStarted = i;
+                } else {
+                    singleQuoteStarted = -1;
+                }
+                continue;
+            }
+
+            if (singleQuoteStarted > -1 || doubleQuoteStarted > -1) {
+                continue;
+            }
+            if (__leaf_isEnglishAlphabet(char) || char === '.') {
                 if (variableStarted === -1) {
                     variableStarted = i;
                     continue;
@@ -460,17 +491,20 @@ class LeafToken {
             if (variableStarted === -1) {
                 continue;
             }
+
             // variable ending
             var variableName = this.origin.substring(variableStarted, i);
-            var observable = this.dom.context.data[variableName];
-            // if (!observable) {
-            //     observable = this.dom.context.extraData[variableName];
-            // }
+
+            var observable: any;
+            try {
+                observable = eval('this.dom.context.data.' + variableName);
+            } catch (_) { }
+            if (!observable) {
+                try {
+                    observable = eval('this.dom.context.extraData.' + variableName);
+                } catch (_) { }
+            }
             if (observable && observable.postValue && observable.__observers) {
-                if (variableStarted > 0 && this.origin[variableStarted - 1] === '.') {
-                    variableStarted = -1;
-                    continue;
-                }
                 this.observableRefs.push(observable);
             }
             variableStarted = -1;
@@ -478,12 +512,18 @@ class LeafToken {
         if (variableStarted !== -1) {
             // variable until the end
             var variableName = this.origin.substring(variableStarted, this.origin.length);
-            var observable = this.dom.context.data[variableName];
+
+            var observable: any;
+            try {
+                observable = eval('this.dom.context.data.' + variableName);
+            } catch (_) { }
+            if (!observable) {
+                try {
+                    observable = eval('this.dom.context.extraData.' + variableName);
+                } catch (_) { }
+            }
             if (observable && observable.postValue && observable.__observers) {
-                if (variableStarted > 0 && this.origin[variableStarted - 1] === '.') {
-                } else {
-                    this.observableRefs.push(observable);
-                }
+                this.observableRefs.push(observable);
             }
         }
     }
@@ -492,7 +532,6 @@ class LeafToken {
         return result;
     }
 }
-
 class LeafAttribute {
     dom: Dom;
     name: string;
@@ -528,7 +567,10 @@ class LeafAttribute {
                 };
                 obs.__observers.push(listener)
                 self.dom.unbindObservables.push(function () {
-                    __leaf_removeInArray(obs.__observers, listener);
+                    var result = __leaf_removeInArray(obs.__observers, listener);
+                    if (!result) {
+                        console.error('unbind attribute failed');
+                    }
                 })
             })(this, this.token.observableRefs[i]);
         }
@@ -536,7 +578,7 @@ class LeafAttribute {
         return this;
     }
     rebind() {
-        this.token.recollectObservables()
+        this.token.collectObservables()
         // parse
         if (__leaf_startsWith(this.name, 'style-')) {
             this.value = this.name.substring(6);
@@ -556,7 +598,9 @@ class LeafAttribute {
                 };
                 obs.__observers.push(listener)
                 self.dom.unbindObservables.push(function () {
-                    __leaf_removeInArray(obs.__observers, listener);
+                    if (!__leaf_removeInArray(obs.__observers, listener)) {
+                        console.error('rebind attribute failed');
+                    }
                 })
             })(this, this.token.observableRefs[i]);
         }
@@ -678,7 +722,7 @@ class LeafTextContent {
 
     rebind() {
         for (var i = 0; i < this.tokens.length; i++) {
-            this.tokens[i].recollectObservables();
+            this.tokens[i].collectObservables();
             for (var j = 0; j < this.tokens[i].observableRefs.length; j++) {
                 var obs = this.tokens[i].observableRefs[j];
                 (function (self: LeafTextContent, obs: LeafObservable) {
@@ -687,7 +731,9 @@ class LeafTextContent {
                     };
                     obs.__observers.push(listener);
                     self.dom.unbindObservables.push(function () {
-                        __leaf_removeInArray(obs.__observers, listener);
+                        if (!__leaf_removeInArray(obs.__observers, listener)) {
+                            console.error('rebind text content failed:');
+                        }
                     })
                 })(this, obs)
             }
