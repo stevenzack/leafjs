@@ -413,11 +413,17 @@ function __leaf_removeInArray(array: any, item: any): boolean {
 function __leaf_executeToken(__leaf_token_origin: string, $: any, __leaf_extraData: any, unwrapData: boolean): any {
     eval(unwrapData ? __leaf_unwrapVariablesOfany($, '$') : '');
     eval(__leaf_unwrapVariablesOfany(__leaf_extraData, '__leaf_extraData'));
-    var result = eval(__leaf_token_origin);
-    if (result && result.postValue && result.__observers) {
-        return result.value;
+    try {
+        var result = eval(__leaf_token_origin);
+        if (result && result.postValue && result.__observers) {
+            return result.value;
+        }
+        return result
+    } catch (e) {
+        console.log($);
+        console.log(__leaf_extraData);
+        throw e;
     }
-    return result
 }
 
 function __leaf_unwrapVariablesOfany(obj: any, objName: string): string {

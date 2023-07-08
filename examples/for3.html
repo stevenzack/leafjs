@@ -1,70 +1,80 @@
-<ul id="for3-id">
-    <input type="text" placeholder="title" l-value="title" onkeyup="appFor3.title.postValue(this.value)">
-    <input type="text" placeholder="name" l-value="name" onkeyup="appFor3.name.postValue(this.value)">
-    <button onclick="doAdd()">Add</button>
-    <li l-for="list as v,i">
-        <span>
-            {{v.title}}
-        </span>
-        <a href="#" l-onclick="'doRemoveItem('+i+')'">delete</a>
-        <div>
-            <button l-for="items as v2,j" l-onclick="'doAddItem('+i+','+j+')'">{{v2.name}}</button>
-        </div>
-    </li>
-</ul>
+<div id="appFor3">
+    <ul>
+        <button onclick="addInList()">+</button>
+        <li l-for="list as v,i">
+            <span>
+                <span>{{v.title}}</span>
+                <button l-onclick="'addInItems('+i+')'">+</button>
+                <button l-onclick="'deleteInList('+i+')'">-</button>
+            </span>
+            <div class="row">
+                <fieldset l-for="items as v2,j">
+                    <legend>
+                        <button l-onclick="'addInTags('+i+','+j+')'">+</button>
+                        <button l-onclick="'deleteInItems('+i+','+j+',)'">-</button>
+                    </legend>
+                    <ul>
+                        <li l-for="tags as v3,k">
+                            <span>{{v3}}</span>
+                            <button l-onclick="'deleteInTags('+i+','+j+','+k+')'">-</button>
+                        </li>
+                    </ul>
+                </fieldset>
+            </div>
+        </li>
+    </ul>
+</div>
 <script>
-    window.doRemoveItem = function (i) {
-        appFor3.list.removeAt(i)
+    window.addInTags = function (i, j) {
+        var l = appFor3.list.value[i].items.value[j].tags.value.length;
+        appFor3.list.value[i].items.value[j].tags.append('tag ' + l)
     }
-    window.doAddItem = function (i, j) {
+    window.deleteInTags = function (i, j, k) {
+        appFor3.list.value[i].items.value[j].tags.removeAt(k);
+    }
+    window.addInItems = function (i) {
         appFor3.list.value[i].items.append({
-            name: 'Item ' + j,
-        })
+            name: Observable('name'),
+            tags: Observable([
+                'cat',
+                "funny"
+            ])
+        });
     }
-    window.doAdd = function () {
-        var title = appFor3.title.value;
-        var name = appFor3.name.value;
-        if (!title || !name) {
-            return;
-        }
+    window.deleteInItems = function (i, j) {
+        appFor3.list.value[i].items.removeAt(j);
+    }
+    window.addInList = function () {
         appFor3.list.append({
-            title: title,
+            title: Observable('one'),
             items: Observable([
                 {
-                    name: name,
+                    name: Observable('name'),
+                    tags: Observable([
+                        'cat',
+                        "funny"
+                    ])
                 }
             ])
         })
     }
-    appFor3 = Leaf('for3-id', {
-        title: Observable(''),
-        name: Observable(''),
-
+    window.deleteInList = function (i) {
+        appFor3.list.removeAt(i);
+    }
+    appFor3 = Leaf('appFor3', {
         list: Observable([
             {
-                title: 'One',
+                title: Observable('one'),
                 items: Observable([
                     {
-                        name: 'Bob'
-                    }
+                        name: Observable('name'),
+                        tags: Observable([
+                            'cat',
+                            "funny"
+                        ])
+                    },
                 ])
-            },
-            {
-                title: 'Two',
-                items: Observable([
-                    {
-                        name: 'asd'
-                    }
-                ])
-            },
-            {
-                title: 'Three',
-                items: Observable([
-                    {
-                        name: 'ppp'
-                    }
-                ])
-            },
+            }
         ])
     })
 </script>
