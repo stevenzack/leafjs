@@ -5,16 +5,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script src="leaf.js"></script>
+    <link rel="stylesheet" href="app.css">
 </head>
 
 <body>
+    <div id="app">
+        <ul>
+            <li l-for="list as v">
+                <span>
+                    {{v.title}}
+                </span>
+                <div>
+                    <fieldset l-for="v.items as v2">
+                        <ul>
+                            <li l-for="v2.tags">
+                                {{$}}
+                            </li>
+                        </ul>
+                    </fieldset>
+                </div>
+            </li>
+        </ul>
+    </div>
     <script>
-            switch (i) {
-                case 1:
-                    continue;
-                case 2:
-            }
-            console.log(i);
+        app=Leaf('app',{
+            list:[
+                {
+                    title:'asd',
+                    items:[
+                        {
+                            tags:[
+                                'cat',
+                                "funny"
+                            ]
+                        },
+                        {
+                            tags:[
+                                'meow',
+                                'wee'
+                            ]
+                        }
+                    ]
+                },
+                {
+                    title:'two',
+                }
+            ]
+        })
     </script>
 </body>
 
