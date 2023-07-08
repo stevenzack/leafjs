@@ -18,18 +18,20 @@
             <span>
                 {{v.title}}
             </span>
-            <a href="#" l-onclick="'appFor3.list.removeAt('+i+')'">delete</a>
-    
+            <a href="#" l-onclick="'doRemoveItem('+i+')'">delete</a>
+            <div>
+                <button l-for="items as v2,j" l-onclick="'doAddItem('+i+','+j+')'">{{v2.name}}</button>
+            </div>
         </li>
     </ul>
     <script>
-        window.doAppendItem = function (i, j) {
-            var origin = appFor3.list.value[i].items.value[j].name;
-            appFor3.list.value[i].items.value[j].name = origin === 'asd' ? 'Changed' : 'asd';
-            var len = appFor3.list.value[i].items.value.length;
+        window.doRemoveItem = function (i) {
+            appFor3.list.removeAt(i)
+        }
+        window.doAddItem = function (i, j) {
             appFor3.list.value[i].items.append({
-                name: 'subitem ' + len,
-            });
+                name: 'Item ' + j,
+            })
         }
         window.doAdd = function () {
             var title = appFor3.title.value;

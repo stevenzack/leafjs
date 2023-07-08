@@ -138,13 +138,14 @@ class Dom {
         this.elem.setAttribute('__leaf_for_item__', tokenOrigin);
         this.elem.removeAttribute('l-for');
         this.lForTemplate = this.elem.outerHTML;
+        this.elem.style.display = 'none';
         this.lForTokenOrigin = tokenOrigin;
 
         const ss = tokenOrigin.split(' ');
         var listVariableName = '';
         var itemName = '';
         var indexName = '';
-        this.siblings = [this];
+        this.siblings = [];
 
         for (var i = 0; i < ss.length; i++) {
             var s = ss[i].replace(' ', '');
@@ -158,7 +159,8 @@ class Dom {
 
                 var observable = this.context.data[s];
                 if (!observable) {
-                    throw new Error('value in token {{' + tokenOrigin + '}} not found');
+                    console.error(this.context);
+                    throw new Error('value [' + s + '] in token {{' + tokenOrigin + '}} not found');
                 }
                 if (observable.postValue && observable.__observers) {
                     var value = observable.value;
@@ -222,7 +224,6 @@ class Dom {
         }
         // switch context when scope changed
         this.context = new __LeafContext(this.context.data, this.context.extraData, !itemName);
-
         // text content
         if (LeafTextContent.checkIfNeeded(this)) {
             this.textContent = new LeafTextContent(this);
@@ -240,27 +241,6 @@ class Dom {
                     __leaf_removeInArray(obs.__observers, listener);
                 })
             })(listData as LeafObservable, this);
-        }
-
-        // attributes
-        for (var i = 0; i < this.elem.attributes.length; i++) {
-            var attr = this.elem.attributes[i];
-            if (attr.name === 'l-for') {
-                continue;
-            }
-            if (__leaf_startsWith(attr.name, 'l-')) {
-                this.attributes.push(new LeafAttribute(this, attr.name, attr.value));
-            }
-        }
-
-        // text content
-        if (LeafTextContent.checkIfNeeded(this)) {
-            this.textContent = new LeafTextContent(this);
-        }
-
-        // children
-        for (var i = 0; i < this.elem.children.length; i++) {
-            this.children.push(new Dom(this, this.elem.children[i] as HTMLElement, this.context))
         }
     }
 
@@ -314,6 +294,7 @@ class Dom {
 
         return this.parentDom.context.data[this.listKey];
     }
+
     private executeArray() {
         console.log('executeArray: ');
         var dataList = this.getListData();
@@ -339,11 +320,7 @@ class Dom {
         for (var i = 0; i < this.siblings.length || i < dataList.length; i++) {
             if (i >= dataList.length) {
                 //delete
-                if (i === 0) {
-                    this.elem.style.display = 'none';
-                } else {
-                    toRemove.push(this.siblings[i]);
-                }
+                toRemove.push(this.siblings[i]);
                 continue;
             }
 
@@ -352,7 +329,6 @@ class Dom {
                 //update
                 sibiling.context.data = dataList[i];
                 sibiling.context.extraData[this.asIndexKey] = i;
-                console.log('i == ' + i);
 
                 console.log(sibiling.context.extraData);
 
@@ -364,10 +340,7 @@ class Dom {
                     sibiling.context.extraData[this.asItemKey] = dataList[i];
                 }
 
-                if (i === 0) {
-                    sibiling.elem.style.display = '';
-                }
-                this.siblings[i].execute(true);
+                sibiling.execute(true);
                 continue;
             }
             // create
@@ -386,11 +359,13 @@ class Dom {
         }
         console.log('loop end');
 
+        // remove
         for (var i = 0; i < toRemove.length; i++) {
             __leaf_removeInArray(this.siblings, toRemove[i]);
             this.parentDom.elem.removeChild(toRemove[i].elem);
         }
 
+        // append
         var suffixIndex = -1;
         for (var i = 0; i < this.parentDom.elem.children.length; i++) {
             if (this.parentDom.elem.children[i].getAttribute('__leaf_for_item__') === this.lForTokenOrigin) {
@@ -488,6 +463,9 @@ class LeafToken {
             // variable ending
             var variableName = this.origin.substring(variableStarted, i);
             var observable = this.dom.context.data[variableName];
+            // if (!observable) {
+            //     observable = this.dom.context.extraData[variableName];
+            // }
             if (observable && observable.postValue && observable.__observers) {
                 if (variableStarted > 0 && this.origin[variableStarted - 1] === '.') {
                     variableStarted = -1;
