@@ -8,3 +8,4 @@ We use pure basic JavaScript, to support the oldest browser early than 2010
 - for as
 - l-with
 - collect observables in {{v.name}}
+- l-for="list[current].items as v,i"

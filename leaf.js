@@ -613,6 +613,10 @@ var LeafAttribute = /** @class */ (function () {
         if (result && result.__observers && result.postValue) {
             result = result.value;
         }
+        if (this.name === 'html') {
+            this.dom.elem.innerHTML = result;
+            return;
+        }
         if (this.name === 'class') {
             if (result) {
                 __leaf_addClass(this.dom.elem, this.value);

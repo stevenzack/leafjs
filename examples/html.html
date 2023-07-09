@@ -1,0 +1,15 @@
+<div id="appHTML">
+    <button onclick="addHTMLData()">click</button>
+    <div l-html="data">
+    </div>
+</div>
+
+<script>
+    window.addHTMLData = function () {
+        var data = appHTML.data.value;
+        appHTML.data.postValue(data ? '' : 'Replaced with <a target="_blank" href="http://leaf.lan-genius.com">innerHTML</a>')
+    }
+    appHTML = Leaf('appHTML', {
+        data: Observable(''),
+    })
+</script>
