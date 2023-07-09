@@ -858,7 +858,10 @@ function embedHTML(callback: () => void, elemOrId: HTMLElement | string) {
     }
 
     var elems = document.getElementsByTagName('template');
-    if (!elems) return;
+    if (!elems || elems.length === 0) {
+        callback();
+        return;
+    }
     var waitGroup = 0;
     for (var i = 0; i < elems.length; i++) {
         var elem = elems[i] as HTMLElement;
@@ -883,7 +886,7 @@ function __leaf_embedHTML(elem: HTMLElement, src: string, callback: () => void) 
         }
         if (callback) callback();
         if (xhr.status !== 200) {
-            elem.innerText = xhr.status + ': ' + xhr.responseText;
+            console.error(xhr.status + ': ' + xhr.responseText);
             return;
         }
         elem.outerHTML = xhr.responseText;

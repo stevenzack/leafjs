@@ -797,8 +797,10 @@ function embedHTML(callback, elemOrId) {
         return;
     }
     var elems = document.getElementsByTagName('template');
-    if (!elems)
+    if (!elems || elems.length === 0) {
+        callback();
         return;
+    }
     var waitGroup = 0;
     for (var i = 0; i < elems.length; i++) {
         var elem = elems[i];
@@ -823,7 +825,7 @@ function __leaf_embedHTML(elem, src, callback) {
         if (callback)
             callback();
         if (xhr.status !== 200) {
-            elem.innerText = xhr.status + ': ' + xhr.responseText;
+            console.error(xhr.status + ': ' + xhr.responseText);
             return;
         }
         elem.outerHTML = xhr.responseText;
