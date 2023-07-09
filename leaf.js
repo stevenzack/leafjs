@@ -721,7 +721,7 @@ function Leaf(id, data) {
     dom.execute(false);
     return data;
 }
-function embedHTML(callback, elemOrId) {
+function embedHTML(callback, elemOrId, src) {
     if (elemOrId) {
         var elem;
         if (typeof elemOrId === 'string') {
@@ -737,7 +737,9 @@ function embedHTML(callback, elemOrId) {
         else {
             elem = elemOrId;
         }
-        var src = elem.getAttribute('src');
+        if (!src) {
+            src = elem.getAttribute('src');
+        }
         if (!src) {
             throw new Error('template.src not set:' + elem.outerHTML);
         }

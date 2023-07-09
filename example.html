@@ -5,91 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script src="leaf.js"></script>
-    <link rel="stylesheet" href="appFor3.css">
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
 </head>
 
 <body>
-    <div id="appFor3">
-        <ul>
-            <button onclick="addInList()">+</button>
-            <li l-for="list as v,i">
-                <span>
-                    <span>{{v.title}}</span>
-                    <button l-onclick="'addInItems('+i+')'">+</button>
-                    <button l-onclick="'deleteInList('+i+')'">-</button>
-                </span>
-                <div class="row">
-                    <fieldset l-for="items as v2,j">
-                        <legend>
-                            <button l-onclick="'addInTags('+i+','+j+')'">+</button>
-                            <button l-onclick="'deleteInItems('+i+','+j+',)'">-</button>
-                        </legend>
-                        <ul>
-                            <li l-for="tags as v3,k">
-                                <span>{{v3}}</span>
-                                <button l-onclick="'deleteInTags('+i+','+j+','+k+')'">-</button>
-                            </li>
-                        </ul>
-                    </fieldset>
-                </div>
-            </li>
-        </ul>
-    </div>
-    <script>
-        window.addInTags = function (i, j) {
-            var l = appFor3.list.value[i].items.value[j].tags.value.length;
-            appFor3.list.value[i].items.value[j].tags.append('tag ' + l)
-        }
-        window.deleteInTags = function (i, j, k) {
-            appFor3.list.value[i].items.value[j].tags.removeAt(k);
-        }
-        window.addInItems = function (i) {
-            appFor3.list.value[i].items.append({
-                name: Observable('name'),
-                tags: Observable([
-                    'cat',
-                    "funny"
-                ])
-            });
-        }
-        window.deleteInItems = function (i, j) {
-            appFor3.list.value[i].items.removeAt(j);
-        }
-        window.addInList = function () {
-            appFor3.list.append({
-                title: Observable('one'),
-                items: Observable([
-                    {
-                        name: Observable('name'),
-                        tags: Observable([
-                            'cat',
-                            "funny"
-                        ])
-                    }
-                ])
-            })
-        }
-        window.deleteInList = function (i) {
-            appFor3.list.removeAt(i);
-        }
-        appFor3 = Leaf('appFor3', {
-            list: Observable([
-                {
-                    title: Observable('one'),
-                    items: Observable([
-                        {
-                            name: Observable('name'),
-                            tags: Observable([
-                                'cat',
-                                "funny"
-                            ])
-                        },
-                    ])
-                }
-            ])
-        })
-    </script>
+    <button hx-post="/clicked" hx-swap="outerHTML">
+        Click Me
+    </button>
+    <button hx-get="/click">
+        Click Me!
+        <img class="htmx-indicator" src="/spinner.gif">
+    </button>
+    <button hx-delete="/account" hx-confirm="Are you sure?">
+        Delete My Account
+    </button>
 </body>
 
 </html>
