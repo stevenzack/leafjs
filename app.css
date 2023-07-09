@@ -87,71 +87,71 @@ body {
 }
 
 .p {
-    padding: 8px;
+    padding: 8px !important;
 }
 
 .p2 {
-    padding: 16px;
+    padding: 16px !important;
 }
 
 .px {
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
 }
 
 .py {
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
 }
 
 .pl {
-    padding-left: 8px;
+    padding-left: 8px !important;
 }
 
 .pr {
-    padding-right: 8px;
+    padding-right: 8px !important;
 }
 
 .pt {
-    padding-top: 8px;
+    padding-top: 8px !important;
 }
 
 .pb {
-    padding-bottom: 8px;
+    padding-bottom: 8px !important;
 }
 
 .m {
-    margin: 8px;
+    margin: 8px !important;
 }
 
 .m2 {
-    margin: 16px;
+    margin: 16px !important;
 }
 
 .mx {
-    margin-left: 8px;
-    margin-right: 8px;
+    margin-left: 8px !important;
+    margin-right: 8px !important;
 }
 
 .my {
-    margin-top: 8px;
-    margin-bottom: 8px;
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
 }
 
 .ml {
-    margin-left: 8px;
+    margin-left: 8px !important;
 }
 
 .mr {
-    margin-right: 8px;
+    margin-right: 8px !important;
 }
 
 .mt {
-    margin-top: 8px;
+    margin-top: 8px !important;
 }
 
 .mb {
-    margin-bottom: 8px;
+    margin-bottom: 8px !important;
 }
 
 .w {
@@ -228,7 +228,7 @@ body {
 
 .border {
     border-width: 1px;
-    border-color: lightgrey;
+    border: solid lightgrey;
 }
 
 .hscreen {
@@ -276,13 +276,93 @@ body {
 .iconbtn:hover {
     background-color: #ddd;
 }
-@media screen and (max-width: 700px){
-    .mobilehide{
+
+@media screen and (max-width: 700px) {
+    .mobilehide {
         display: none;
     }
 }
-@media screen and (min-width: 700px){
-    .desktophide{
+
+@media screen and (min-width: 700px) {
+    .desktophide {
         display: none;
     }
+}
+
+.btn {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.btn-primary {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    background-color: #3f51b5;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: #4f61c5;
+}
+
+.btn-primary:active {
+    background-color: #5f71d5;
+}
+
+.btn-link:hover {
+    background-color: #eee;
+}
+
+.btn-outline{
+    border: solid grey;
+    border-width: 1px;
+}
+.btn-outline:hover{
+    background-color: #eee !important;
+}
+
+.material-icons{
+    margin-top: 2px;
+    margin-right: 2px;
+}
+
+.tabbar{
+    overflow-x: scroll;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+.tab{
+    cursor: pointer;
+    padding: 16px;
+}
+.tab:hover{
+    background-color: #eee;
+}
+.tab-active{
+    border-bottom: solid 2px #3f51b5;
+}
+.breakword{
+    word-break: break-all;
+}
+
+.footer{
+    width: 100%;
+    padding-top: 32px;
+    padding-bottom: 32px;
+    margin-top: 300px;
+    background-color: #303846;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-around;
+    color: white;
 }
