@@ -512,12 +512,26 @@ class LeafToken {
             }
             if (observable && observable.postValue && observable.__observers) {
                 this.observableRefs.push(observable);
+            } else if (__leaf_endsWith(variableName, '.value')) {
+                variableName = variableName.substring(0, variableName.length - 6);
+                try {
+                    observable = eval('this.dom.context.data.' + variableName);
+                } catch (_) { }
+                if (!observable) {
+                    try {
+                        observable = eval('this.dom.context.extraData.' + variableName);
+                    } catch (_) { }
+                }
+                if (observable && observable.postValue && observable.__observers) {
+                    this.observableRefs.push(observable);
+                }
             }
             variableStarted = -1;
         }
         if (variableStarted !== -1) {
             // variable until the end
             var variableName = this.origin.substring(variableStarted, this.origin.length);
+            console.log(variableName);
 
             var observable: any;
             try {
@@ -530,6 +544,20 @@ class LeafToken {
             }
             if (observable && observable.postValue && observable.__observers) {
                 this.observableRefs.push(observable);
+            } else if (__leaf_endsWith(variableName, '.value')) {
+                variableName = variableName.substring(0, variableName.length - 6);
+                try {
+                    observable = eval('this.dom.context.data.' + variableName);
+                } catch (_) { }
+                if (!observable) {
+                    try {
+                        observable = eval('this.dom.context.extraData.' + variableName);
+                    } catch (_) { }
+                }
+                if (observable && observable.postValue && observable.__observers) {
+                    this.observableRefs.push(observable);
+                    console.log(observable);
+                }
             }
         }
     }
@@ -662,8 +690,8 @@ class LeafTextContent {
 
         var observableCollection: LeafObservable[] = [];
         var existsInArray = function (v: LeafObservable, array: LeafObservable[]): boolean {
-            for (var i = 0; i < observableCollection.length; i++) {
-                if (observableCollection[i] === v) {
+            for (var i = 0; i < array.length; i++) {
+                if (array[i] === v) {
                     return true;
                 }
             }
@@ -899,6 +927,12 @@ function __leaf_startsWith(s: string, sep: string): boolean {
     }
     return s.substring(0, sep.length) === sep;
 }
+function __leaf_endsWith(s: string, sep: string): boolean {
+    if (s.length < sep.length) {
+        return false;
+    }
+    return s.substring(s.length - sep.length, s.length) === sep;
+}
 
 function __leaf_removeClass(elem: HTMLElement, className: string) {
     var s = elem.getAttribute('class');
@@ -907,7 +941,7 @@ function __leaf_removeClass(elem: HTMLElement, className: string) {
         const ss = s.split(' ');
         for (var i = 0; i < ss.length; i++) {
             if (ss[i] && ss[i] !== className) {
-                builder += ss[i];
+                builder += ss[i] + ' ';
             }
         }
         elem.setAttribute('class', builder);
@@ -928,10 +962,26 @@ function __leaf_addClass(elem: HTMLElement, className: string) {
     }
     elem.setAttribute('class', s + ' ' + className);
 }
+
 function __leaf_copyeObject(obj: object) {
+    if (obj instanceof Array) {
+        var l = [];
+        for (var i = 0; i < obj.length; i++) {
+            var v = obj[i];
+            if (typeof value === 'object') {
+                v = __leaf_copyeObject(v);
+            }
+            l.push(v);
+        }
+        return l;
+    }
     var c = {};
     for (var key in obj) {
         var value = obj[key];
+        if (key === '_root') {
+            c[key] = value;
+            continue;
+        }
         if (typeof value === 'object') {
             c[key] = __leaf_copyeObject(value);
             continue;

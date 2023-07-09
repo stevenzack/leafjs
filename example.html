@@ -5,20 +5,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <script src="leaf.js"></script>
 </head>
 
 <body>
-    <button hx-post="/clicked" hx-swap="outerHTML">
-        Click Me
-    </button>
-    <button hx-get="/click">
-        Click Me!
-        <img class="htmx-indicator" src="/spinner.gif">
-    </button>
-    <button hx-delete="/account" hx-confirm="Are you sure?">
-        Delete My Account
-    </button>
+    <div id="app">
+        <button l-for="list as v,i" l-style-background-color:blue="i===_root.current.value" l-onclick="'app.current.postValue('+i+')'">
+            {{v}}
+        </button>
+    </div>
+    <script>
+        app=Leaf('app',{
+            current:Observable(0),
+            list:[
+                'one',
+                'two',
+                'three'
+            ]
+        })
+    </script>
 </body>
 
 </html>

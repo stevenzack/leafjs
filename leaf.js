@@ -465,11 +465,28 @@ var LeafToken = /** @class */ (function () {
             if (observable && observable.postValue && observable.__observers) {
                 this.observableRefs.push(observable);
             }
+            else if (__leaf_endsWith(variableName, '.value')) {
+                variableName = variableName.substring(0, variableName.length - 6);
+                try {
+                    observable = eval('this.dom.context.data.' + variableName);
+                }
+                catch (_) { }
+                if (!observable) {
+                    try {
+                        observable = eval('this.dom.context.extraData.' + variableName);
+                    }
+                    catch (_) { }
+                }
+                if (observable && observable.postValue && observable.__observers) {
+                    this.observableRefs.push(observable);
+                }
+            }
             variableStarted = -1;
         }
         if (variableStarted !== -1) {
             // variable until the end
             var variableName = this.origin.substring(variableStarted, this.origin.length);
+            console.log(variableName);
             var observable;
             try {
                 observable = eval('this.dom.context.data.' + variableName);
@@ -483,6 +500,23 @@ var LeafToken = /** @class */ (function () {
             }
             if (observable && observable.postValue && observable.__observers) {
                 this.observableRefs.push(observable);
+            }
+            else if (__leaf_endsWith(variableName, '.value')) {
+                variableName = variableName.substring(0, variableName.length - 6);
+                try {
+                    observable = eval('this.dom.context.data.' + variableName);
+                }
+                catch (_) { }
+                if (!observable) {
+                    try {
+                        observable = eval('this.dom.context.extraData.' + variableName);
+                    }
+                    catch (_) { }
+                }
+                if (observable && observable.postValue && observable.__observers) {
+                    this.observableRefs.push(observable);
+                    console.log(observable);
+                }
             }
         }
     };
@@ -610,8 +644,8 @@ var LeafTextContent = /** @class */ (function () {
         var nodes = dom.elem.childNodes;
         var observableCollection = [];
         var existsInArray = function (v, array) {
-            for (var i = 0; i < observableCollection.length; i++) {
-                if (observableCollection[i] === v) {
+            for (var i = 0; i < array.length; i++) {
+                if (array[i] === v) {
                     return true;
                 }
             }
@@ -721,7 +755,7 @@ function Leaf(id, data) {
     dom.execute(false);
     return data;
 }
-function embedHTML(callback, elemOrId, src) {
+function embedHTML(callback, elemOrId) {
     if (elemOrId) {
         var elem;
         if (typeof elemOrId === 'string') {
@@ -737,9 +771,7 @@ function embedHTML(callback, elemOrId, src) {
         else {
             elem = elemOrId;
         }
-        if (!src) {
-            src = elem.getAttribute('src');
-        }
+        var src = elem.getAttribute('src');
         if (!src) {
             throw new Error('template.src not set:' + elem.outerHTML);
         }
@@ -829,6 +861,12 @@ function __leaf_startsWith(s, sep) {
     }
     return s.substring(0, sep.length) === sep;
 }
+function __leaf_endsWith(s, sep) {
+    if (s.length < sep.length) {
+        return false;
+    }
+    return s.substring(s.length - sep.length, s.length) === sep;
+}
 function __leaf_removeClass(elem, className) {
     var s = elem.getAttribute('class');
     if (s) {
@@ -836,7 +874,7 @@ function __leaf_removeClass(elem, className) {
         var ss = s.split(' ');
         for (var i = 0; i < ss.length; i++) {
             if (ss[i] && ss[i] !== className) {
-                builder += ss[i];
+                builder += ss[i] + ' ';
             }
         }
         elem.setAttribute('class', builder);
@@ -857,9 +895,24 @@ function __leaf_addClass(elem, className) {
     elem.setAttribute('class', s + ' ' + className);
 }
 function __leaf_copyeObject(obj) {
+    if (obj instanceof Array) {
+        var l = [];
+        for (var i = 0; i < obj.length; i++) {
+            var v = obj[i];
+            if (typeof value === 'object') {
+                v = __leaf_copyeObject(v);
+            }
+            l.push(v);
+        }
+        return l;
+    }
     var c = {};
     for (var key in obj) {
         var value = obj[key];
+        if (key === '_root') {
+            c[key] = value;
+            continue;
+        }
         if (typeof value === 'object') {
             c[key] = __leaf_copyeObject(value);
             continue;
