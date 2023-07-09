@@ -455,14 +455,18 @@ var LeafToken = /** @class */ (function () {
             try {
                 observable = eval('this.dom.context.data.' + variableName);
             }
-            catch (_) { }
-            if (!observable) {
+            catch (_) {
+                observable = undefined;
+            }
+            if (observable === undefined) {
                 try {
                     observable = eval('this.dom.context.extraData.' + variableName);
                 }
-                catch (_) { }
+                catch (_) {
+                    observable = undefined;
+                }
             }
-            if (observable && observable.postValue && observable.__observers) {
+            if (observable != undefined && observable.postValue && observable.__observers) {
                 this.observableRefs.push(observable);
             }
             else if (__leaf_endsWith(variableName, '.value')) {
@@ -470,14 +474,18 @@ var LeafToken = /** @class */ (function () {
                 try {
                     observable = eval('this.dom.context.data.' + variableName);
                 }
-                catch (_) { }
-                if (!observable) {
+                catch (e) {
+                    observable = undefined;
+                }
+                if (observable === undefined) {
                     try {
                         observable = eval('this.dom.context.extraData.' + variableName);
                     }
-                    catch (_) { }
+                    catch (e) {
+                        observable = undefined;
+                    }
                 }
-                if (observable && observable.postValue && observable.__observers) {
+                if (observable != undefined && observable.postValue && observable.__observers) {
                     this.observableRefs.push(observable);
                 }
             }
@@ -486,19 +494,22 @@ var LeafToken = /** @class */ (function () {
         if (variableStarted !== -1) {
             // variable until the end
             var variableName = this.origin.substring(variableStarted, this.origin.length);
-            console.log(variableName);
             var observable;
             try {
                 observable = eval('this.dom.context.data.' + variableName);
             }
-            catch (_) { }
-            if (!observable) {
+            catch (_) {
+                observable = undefined;
+            }
+            if (observable === undefined) {
                 try {
                     observable = eval('this.dom.context.extraData.' + variableName);
                 }
-                catch (_) { }
+                catch (_) {
+                    observable = undefined;
+                }
             }
-            if (observable && observable.postValue && observable.__observers) {
+            if (observable != undefined && observable.postValue && observable.__observers) {
                 this.observableRefs.push(observable);
             }
             else if (__leaf_endsWith(variableName, '.value')) {
@@ -506,16 +517,19 @@ var LeafToken = /** @class */ (function () {
                 try {
                     observable = eval('this.dom.context.data.' + variableName);
                 }
-                catch (_) { }
-                if (!observable) {
+                catch (e) {
+                    observable = undefined;
+                }
+                if (observable === undefined) {
                     try {
                         observable = eval('this.dom.context.extraData.' + variableName);
                     }
-                    catch (_) { }
+                    catch (e) {
+                        observable = undefined;
+                    }
                 }
-                if (observable && observable.postValue && observable.__observers) {
+                if (observable != undefined && observable.postValue && observable.__observers) {
                     this.observableRefs.push(observable);
-                    console.log(observable);
                 }
             }
         }
