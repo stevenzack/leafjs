@@ -1,0 +1,25 @@
+name: ssh
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH
+        run: |
+          mkdir -p ~/.ssh 
+          echo $'Host *\n    StrictHostKeyChecking no' > ~/.ssh/config
+          echo "${{ secrets.SSH_PUB }}" >> ~/.ssh/id_rsa.pub
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIV }}
+      - name: Upload
+        run: |
+          sftp root@47.239.122.178:/root/apps/leafjs/ <<< $'put -r *'
