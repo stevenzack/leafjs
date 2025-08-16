@@ -22,4 +22,4 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIV }}
       - name: Upload
         run: |
-          sftp root@47.239.122.178:/root/apps/leafjs/ <<< $'put -r *'
+          sftp root@47.239.122.178:/root/apps/leafjs/ <<< $'put -r .'
