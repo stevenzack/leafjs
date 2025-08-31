@@ -281,11 +281,21 @@ body {
     .mobilehide {
         display: none;
     }
+    .autoflow {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 @media screen and (min-width: 700px) {
     .desktophide {
         display: none;
+    }
+    .autoflow {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
     }
 }
 
@@ -321,40 +331,45 @@ body {
     background-color: #eee;
 }
 
-.btn-outline{
+.btn-outline {
     border: solid grey;
     border-width: 1px;
 }
-.btn-outline:hover{
+
+.btn-outline:hover {
     background-color: #eee !important;
 }
 
-.material-icons{
+.material-icons {
     margin-top: 2px;
     margin-right: 2px;
 }
 
-.tabbar{
+.tabbar {
     overflow-x: scroll;
     display: flex;
     flex-direction: row;
     align-items: stretch;
 }
-.tab{
+
+.tab {
     cursor: pointer;
     padding: 16px;
 }
-.tab:hover{
+
+.tab:hover {
     background-color: #eee;
 }
-.tab-active{
+
+.tab-active {
     border-bottom: solid 2px #3f51b5;
 }
-.breakword{
+
+.breakword {
     word-break: break-all;
 }
 
-.footer{
+.footer {
     width: 100%;
     padding-top: 32px;
     padding-bottom: 32px;
@@ -365,4 +380,14 @@ body {
     align-items: flex-start;
     justify-content: space-around;
     color: white;
+}
+
+nav a {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+nav b {
+    margin-left: 4px;
+    margin-right: 4px;
 }
