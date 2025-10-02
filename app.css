@@ -281,6 +281,7 @@ body {
     .mobilehide {
         display: none;
     }
+
     .autoflow {
         display: flex;
         flex-direction: column;
@@ -292,6 +293,7 @@ body {
     .desktophide {
         display: none;
     }
+
     .autoflow {
         display: flex;
         flex-direction: row;
@@ -308,7 +310,7 @@ body {
     text-decoration: none;
     color: inherit;
     border-radius: 4px;
-    display: flex;
+    display: inline-flex;
     flex-direction: row;
     align-items: center;
 }
@@ -390,4 +392,9 @@ nav a {
 nav b {
     margin-left: 4px;
     margin-right: 4px;
+}
+
+::backdrop {
+    background-color: lightgrey;
+    opacity: 0.75;
 }
